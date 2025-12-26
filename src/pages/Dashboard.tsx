@@ -1,46 +1,60 @@
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
+import AppLayout from '@/components/layout/AppLayout';
+import { useLeads } from '@/hooks/useLeads';
+import { useUsers } from '@/hooks/useUsers';
+import { useLocations } from '@/hooks/useLocations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Users, MapPin, Phone, LogOut, BarChart3, FileText, Settings } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { LEAD_STATUS_CONFIG, LeadStatus } from '@/types';
+import { useNavigate } from 'react-router-dom';
+import { 
+  TrendingUp, Users, MapPin, FileText, BarChart3, 
+  Phone, CheckCircle, XCircle, Clock, Loader2
+} from 'lucide-react';
 
-export default function Dashboard() {
-  const { profile, role, isAdmin, signOut } = useAuth();
+export default function DashboardPage() {
+  const navigate = useNavigate();
+  const { profile, isAdmin } = useAuth();
+  const { data: leads, isLoading: leadsLoading } = useLeads();
+  const { data: users } = useUsers();
+  const { data: locations } = useLocations();
 
-  const stats = [
-    { label: 'Total Leads', value: '0', icon: FileText, color: 'text-primary' },
-    { label: 'Open', value: '0', icon: TrendingUp, color: 'text-status-open' },
-    { label: 'Follow-ups', value: '0', icon: Phone, color: 'text-status-follow-up' },
-    { label: 'Closed', value: '0', icon: BarChart3, color: 'text-status-closed' },
+  // Calculate stats
+  const stats = {
+    total: leads?.length || 0,
+    open: leads?.filter(l => l.status === 'open').length || 0,
+    follow_up: leads?.filter(l => l.status === 'follow_up').length || 0,
+    closed: leads?.filter(l => l.status === 'closed').length || 0,
+    junk: leads?.filter(l => l.status === 'junk').length || 0,
+    future: leads?.filter(l => l.status === 'future').length || 0,
+  };
+
+  const conversionRate = stats.total > 0 
+    ? ((stats.closed / stats.total) * 100).toFixed(1) 
+    : '0';
+
+  const statCards = [
+    { label: 'Total Leads', value: stats.total, icon: FileText, color: 'text-primary' },
+    { label: 'Open', value: stats.open, icon: Clock, color: 'text-status-open' },
+    { label: 'Follow-ups', value: stats.follow_up, icon: Phone, color: 'text-status-follow-up' },
+    { label: 'Closed', value: stats.closed, icon: CheckCircle, color: 'text-status-closed' },
   ];
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b">
-        <div className="container flex items-center justify-between h-16">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="text-lg font-display font-bold">LeadFlow</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium">{profile?.full_name || 'User'}</p>
-              <Badge variant={isAdmin ? 'admin' : 'user'} className="text-xs">
-                {role || 'user'}
-              </Badge>
-            </div>
-            <Button variant="ghost" size="icon" onClick={signOut}>
-              <LogOut className="w-5 h-5" />
-            </Button>
-          </div>
+  if (leadsLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
-      </header>
+      </AppLayout>
+    );
+  }
 
-      <main className="container py-6 space-y-6">
-        {/* Welcome Section */}
+  return (
+    <AppLayout>
+      <div className="p-4 lg:p-6 space-y-6">
+        {/* Welcome */}
         <div className="animate-fade-in">
           <h1 className="text-2xl md:text-3xl font-display font-bold">
             Welcome back, {profile?.full_name?.split(' ')[0] || 'there'}!
@@ -52,7 +66,7 @@ export default function Dashboard() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((stat, i) => (
+          {statCards.map((stat, i) => (
             <Card key={stat.label} className="animate-slide-up" style={{ animationDelay: `${i * 0.05}s` }}>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -67,43 +81,121 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Quick Actions */}
-        <Card className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
+        {/* Admin-only stats */}
+        {isAdmin && (
+          <div className="grid md:grid-cols-3 gap-4">
+            <Card className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Conversion Rate
+                </CardTitle>
+                <BarChart3 className="w-4 h-4 text-status-closed" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{conversionRate}%</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {stats.closed} closed / {stats.total} total
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="animate-slide-up" style={{ animationDelay: '0.25s' }}>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Team Members
+                </CardTitle>
+                <Users className="w-4 h-4 text-primary" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{users?.length || 0}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {users?.filter(u => u.is_active).length || 0} active
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="animate-slide-up" style={{ animationDelay: '0.3s' }}>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Locations
+                </CardTitle>
+                <MapPin className="w-4 h-4 text-accent" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{locations?.length || 0}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {locations?.filter(l => l.is_active).length || 0} active
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Status Breakdown */}
+        <Card className="animate-slide-up" style={{ animationDelay: '0.35s' }}>
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
+            <CardTitle className="text-base">Lead Status Breakdown</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-3">
-            {isAdmin && (
-              <>
-                <Button variant="outline" className="gap-2">
-                  <Users className="w-4 h-4" /> Manage Users
-                </Button>
-                <Button variant="outline" className="gap-2">
-                  <MapPin className="w-4 h-4" /> Locations
-                </Button>
-                <Button variant="outline" className="gap-2">
-                  <Settings className="w-4 h-4" /> Settings
-                </Button>
-              </>
-            )}
-            <Button variant="gradient" className="gap-2">
-              <FileText className="w-4 h-4" /> View Leads
-            </Button>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {Object.entries(LEAD_STATUS_CONFIG).map(([key, config]) => {
+                const count = leads?.filter(l => l.status === key).length || 0;
+                return (
+                  <div 
+                    key={key} 
+                    className="p-3 rounded-lg border text-center cursor-pointer hover:border-primary/50 transition-colors"
+                    onClick={() => navigate('/leads')}
+                  >
+                    <Badge variant={config.color as any} className="mb-2">
+                      {config.label}
+                    </Badge>
+                    <p className="text-2xl font-bold">{count}</p>
+                  </div>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
 
-        {/* Info Card */}
-        <Card className="border-primary/20 bg-primary/5 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-          <CardContent className="pt-6">
-            <p className="text-sm">
-              <strong>Note:</strong> This is a newly created account. 
-              {isAdmin 
-                ? ' Start by adding locations and team members, then import or create leads.'
-                : ' Contact your administrator to assign you to locations and leads.'}
-            </p>
+        {/* Quick Actions */}
+        <Card className="animate-slide-up" style={{ animationDelay: '0.4s' }}>
+          <CardHeader>
+            <CardTitle className="text-base">Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-3">
+            <Button variant="gradient" className="gap-2" onClick={() => navigate('/leads')}>
+              <FileText className="w-4 h-4" /> View All Leads
+            </Button>
+            {isAdmin && (
+              <>
+                <Button variant="outline" className="gap-2" onClick={() => navigate('/users')}>
+                  <Users className="w-4 h-4" /> Manage Users
+                </Button>
+                <Button variant="outline" className="gap-2" onClick={() => navigate('/locations')}>
+                  <MapPin className="w-4 h-4" /> Locations
+                </Button>
+                <Button variant="outline" className="gap-2" onClick={() => navigate('/analytics')}>
+                  <BarChart3 className="w-4 h-4" /> Analytics
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
-      </main>
-    </div>
+
+        {/* Getting Started (show if no leads) */}
+        {stats.total === 0 && (
+          <Card className="border-primary/20 bg-primary/5 animate-slide-up" style={{ animationDelay: '0.45s' }}>
+            <CardContent className="pt-6">
+              <p className="text-sm">
+                <strong>Getting Started:</strong>{' '}
+                {isAdmin 
+                  ? 'Start by adding locations, then create or import leads. Assign team members to manage leads.'
+                  : 'Contact your administrator to assign you to locations and leads.'}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </AppLayout>
   );
 }

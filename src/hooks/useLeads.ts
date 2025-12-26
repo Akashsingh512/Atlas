@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Lead, LeadStatus, FollowUp, Profile } from '@/types';
+import { LeadStatus } from '@/types';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 
@@ -39,11 +39,7 @@ export function useLeads(filters?: { status?: LeadStatus; locationId?: string; s
     queryFn: async () => {
       let query = supabase
         .from('leads')
-        .select(`
-          *,
-          location:locations(id, name),
-          assigned_user:profiles(id, user_id, full_name, email)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (filters?.status) {
@@ -56,9 +52,36 @@ export function useLeads(filters?: { status?: LeadStatus; locationId?: string; s
         query = query.or(`name.ilike.%${filters.search}%,phone.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
       }
 
-      const { data, error } = await query;
+      const { data: leads, error } = await query;
       if (error) throw error;
-      return data as LeadWithRelations[];
+
+      // Fetch locations
+      const locationIds = [...new Set(leads.filter(l => l.location_id).map(l => l.location_id!))];
+      let locations: { id: string; name: string }[] = [];
+      if (locationIds.length > 0) {
+        const { data } = await supabase
+          .from('locations')
+          .select('id, name')
+          .in('id', locationIds);
+        locations = data || [];
+      }
+
+      // Fetch assigned users
+      const userIds = [...new Set(leads.filter(l => l.assigned_to).map(l => l.assigned_to!))];
+      let profiles: { id: string; user_id: string; full_name: string; email: string }[] = [];
+      if (userIds.length > 0) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, user_id, full_name, email')
+          .in('user_id', userIds);
+        profiles = data || [];
+      }
+
+      return leads.map(lead => ({
+        ...lead,
+        location: locations.find(l => l.id === lead.location_id) || null,
+        assigned_user: profiles.find(p => p.user_id === lead.assigned_to) || null,
+      })) as LeadWithRelations[];
     },
     enabled: !!user,
   });
@@ -68,18 +91,42 @@ export function useLead(id: string) {
   return useQuery({
     queryKey: ['lead', id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: lead, error } = await supabase
         .from('leads')
-        .select(`
-          *,
-          location:locations(id, name),
-          assigned_user:profiles(id, user_id, full_name, email)
-        `)
+        .select('*')
         .eq('id', id)
         .maybeSingle();
 
       if (error) throw error;
-      return data as LeadWithRelations | null;
+      if (!lead) return null;
+
+      // Fetch location
+      let location = null;
+      if (lead.location_id) {
+        const { data } = await supabase
+          .from('locations')
+          .select('id, name')
+          .eq('id', lead.location_id)
+          .maybeSingle();
+        location = data;
+      }
+
+      // Fetch assigned user
+      let assigned_user = null;
+      if (lead.assigned_to) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, user_id, full_name, email')
+          .eq('user_id', lead.assigned_to)
+          .maybeSingle();
+        assigned_user = data;
+      }
+
+      return {
+        ...lead,
+        location,
+        assigned_user,
+      } as LeadWithRelations;
     },
     enabled: !!id,
   });
@@ -89,17 +136,29 @@ export function useFollowUps(leadId: string) {
   return useQuery({
     queryKey: ['follow-ups', leadId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: followUps, error } = await supabase
         .from('follow_ups')
-        .select(`
-          *,
-          creator:profiles(id, user_id, full_name)
-        `)
+        .select('*')
         .eq('lead_id', leadId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as FollowUpWithCreator[];
+
+      // Fetch creators
+      const creatorIds = [...new Set(followUps.filter(f => f.created_by).map(f => f.created_by!))];
+      let profiles: { id: string; user_id: string; full_name: string }[] = [];
+      if (creatorIds.length > 0) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, user_id, full_name')
+          .in('user_id', creatorIds);
+        profiles = data || [];
+      }
+
+      return followUps.map(f => ({
+        ...f,
+        creator: profiles.find(p => p.user_id === f.created_by) || null,
+      })) as FollowUpWithCreator[];
     },
     enabled: !!leadId,
   });
@@ -145,7 +204,7 @@ export function useUpdateLead() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ id, data, oldData }: { id: string; data: Partial<Lead>; oldData?: Lead }) => {
+    mutationFn: async ({ id, data, oldStatus }: { id: string; data: Record<string, unknown>; oldStatus?: LeadStatus }) => {
       const { data: lead, error } = await supabase
         .from('leads')
         .update(data)
@@ -161,7 +220,7 @@ export function useUpdateLead() {
         action: 'updated',
         entity_type: 'lead',
         entity_id: id,
-        old_value: oldData ? { status: oldData.status } : null,
+        old_value: oldStatus ? { status: oldStatus } : null,
         new_value: { status: lead.status },
       }]);
 
