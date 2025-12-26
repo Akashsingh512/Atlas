@@ -17,17 +17,29 @@ export function useActivityLogs(limit = 100) {
   return useQuery({
     queryKey: ['activity-logs', limit],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: logs, error } = await supabase
         .from('activity_logs')
-        .select(`
-          *,
-          user:profiles(id, user_id, full_name, email)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(limit);
 
       if (error) throw error;
-      return data as ActivityLogWithUser[];
+
+      // Fetch users
+      const userIds = [...new Set(logs.filter(l => l.user_id).map(l => l.user_id!))];
+      let profiles: { id: string; user_id: string; full_name: string; email: string }[] = [];
+      if (userIds.length > 0) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, user_id, full_name, email')
+          .in('user_id', userIds);
+        profiles = data || [];
+      }
+
+      return logs.map(log => ({
+        ...log,
+        user: profiles.find(p => p.user_id === log.user_id) || null,
+      })) as ActivityLogWithUser[];
     },
   });
 }
