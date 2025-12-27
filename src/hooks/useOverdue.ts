@@ -91,6 +91,8 @@ export function useOverdueSummary() {
       } as OverdueSummary;
     },
     enabled: !!user && !!overdueStatuses,
-    refetchInterval: 60000, // Refresh every minute
+    refetchInterval: 30000, // Refresh every 30 seconds for more accurate counts
+    refetchOnWindowFocus: true, // Refetch when user returns to the tab
+    staleTime: 15000, // Consider data stale after 15 seconds
   });
 }

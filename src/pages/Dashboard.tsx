@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import AppLayout from '@/components/layout/AppLayout';
 import { useLeads } from '@/hooks/useLeads';
@@ -17,10 +19,17 @@ import {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { profile, isAdmin } = useAuth();
   const { data: leads, isLoading: leadsLoading } = useLeads();
   const { data: users } = useUsers();
   const { data: locations } = useLocations();
+
+  // Invalidate overdue queries on dashboard load to ensure fresh data
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['overdue-summary'] });
+    queryClient.invalidateQueries({ queryKey: ['overdue-statuses'] });
+  }, [queryClient]);
 
   // Calculate stats
   const stats = {
