@@ -84,6 +84,20 @@ export function useCreateMeeting() {
     mutationFn: async (data: MeetingFormData) => {
       const { participant_ids, ...meetingData } = data;
       
+      // Check for existing scheduled meeting for this lead on the same date
+      const { data: existingMeetings, error: checkError } = await supabase
+        .from('meetings')
+        .select('id')
+        .eq('lead_id', data.lead_id)
+        .eq('meeting_date', data.meeting_date)
+        .eq('status', 'scheduled');
+      
+      if (checkError) throw checkError;
+      
+      if (existingMeetings && existingMeetings.length > 0) {
+        throw new Error('A meeting is already scheduled for this lead on this date');
+      }
+      
       const { data: meeting, error } = await supabase
         .from('meetings')
         .insert([{ ...meetingData, scheduled_by: user?.id }])
@@ -132,7 +146,7 @@ export function useCreateMeeting() {
       toast.success('Meeting scheduled successfully');
     },
     onError: (error) => {
-      toast.error('Failed to schedule meeting: ' + error.message);
+      toast.error(error.message || 'Failed to schedule meeting');
     },
   });
 }
