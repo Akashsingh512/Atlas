@@ -3,6 +3,8 @@ import AppLayout from '@/components/layout/AppLayout';
 import { useLeads } from '@/hooks/useLeads';
 import { useUsers } from '@/hooks/useUsers';
 import { useLocations } from '@/hooks/useLocations';
+import OverdueSection from '@/components/dashboard/OverdueSection';
+import TodaySummaryCards from '@/components/dashboard/TodaySummaryCards';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -63,6 +65,12 @@ export default function DashboardPage() {
             {isAdmin ? 'Manage your team and track all leads' : 'Track and manage your assigned leads'}
           </p>
         </div>
+
+        {/* Overdue Section - Priority */}
+        <OverdueSection />
+
+        {/* Today's Summary */}
+        <TodaySummaryCards />
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -166,13 +174,16 @@ export default function DashboardPage() {
             <Button variant="gradient" className="gap-2" onClick={() => navigate('/leads')}>
               <FileText className="w-4 h-4" /> View All Leads
             </Button>
+            <Button variant="outline" className="gap-2" onClick={() => navigate('/meetings')}>
+              <TrendingUp className="w-4 h-4" /> Meetings
+            </Button>
             {isAdmin && (
               <>
                 <Button variant="outline" className="gap-2" onClick={() => navigate('/users')}>
                   <Users className="w-4 h-4" /> Manage Users
                 </Button>
-                <Button variant="outline" className="gap-2" onClick={() => navigate('/locations')}>
-                  <MapPin className="w-4 h-4" /> Locations
+                <Button variant="outline" className="gap-2" onClick={() => navigate('/bulk-upload')}>
+                  <MapPin className="w-4 h-4" /> Bulk Upload
                 </Button>
                 <Button variant="outline" className="gap-2" onClick={() => navigate('/analytics')}>
                   <BarChart3 className="w-4 h-4" /> Analytics
