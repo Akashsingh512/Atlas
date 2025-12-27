@@ -94,6 +94,26 @@ export function useCreateCallback() {
 
   return useMutation({
     mutationFn: async (data: CallbackFormData) => {
+      // Check for existing pending callback for this lead on the same date
+      const callbackDate = new Date(data.callback_datetime);
+      const dateStr = callbackDate.toISOString().split('T')[0];
+      const startOfDay = new Date(`${dateStr}T00:00:00`);
+      const endOfDay = new Date(`${dateStr}T23:59:59`);
+      
+      const { data: existingCallbacks, error: checkError } = await supabase
+        .from('callbacks')
+        .select('id')
+        .eq('lead_id', data.lead_id)
+        .eq('status', 'pending')
+        .gte('callback_datetime', startOfDay.toISOString())
+        .lt('callback_datetime', endOfDay.toISOString());
+      
+      if (checkError) throw checkError;
+      
+      if (existingCallbacks && existingCallbacks.length > 0) {
+        throw new Error('A callback is already scheduled for this lead on this date');
+      }
+      
       const { data: callback, error } = await supabase
         .from('callbacks')
         .insert([{ ...data, created_by: user?.id }])
@@ -103,7 +123,6 @@ export function useCreateCallback() {
       if (error) throw error;
 
       // Create notification with properly formatted time
-      const callbackDate = new Date(data.callback_datetime);
       await supabase.from('notifications').insert([{
         user_id: data.assigned_to,
         title: 'Callback Scheduled',
@@ -130,7 +149,7 @@ export function useCreateCallback() {
       toast.success('Callback scheduled');
     },
     onError: (error) => {
-      toast.error('Failed to schedule callback: ' + error.message);
+      toast.error(error.message || 'Failed to schedule callback');
     },
   });
 }
