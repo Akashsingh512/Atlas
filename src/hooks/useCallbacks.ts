@@ -4,6 +4,27 @@ import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 import { Callback, CallbackFormData } from '@/types/extended';
 
+// Helper to format datetime for display in local timezone
+export function formatCallbackDateTime(isoString: string): string {
+  const date = new Date(isoString);
+  return date.toLocaleString(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+}
+
+// Helper to get just the date portion
+export function formatCallbackDate(isoString: string): string {
+  const date = new Date(isoString);
+  return date.toLocaleDateString(undefined, { dateStyle: 'medium' });
+}
+
+// Helper to get just the time portion
+export function formatCallbackTime(isoString: string): string {
+  const date = new Date(isoString);
+  return date.toLocaleTimeString(undefined, { timeStyle: 'short' });
+}
+
 export function useCallbacks(filters?: { status?: string; date?: string }) {
   const { user } = useAuth();
 
@@ -19,8 +40,12 @@ export function useCallbacks(filters?: { status?: string; date?: string }) {
         query = query.eq('status', filters.status);
       }
       if (filters?.date) {
-        query = query.gte('callback_datetime', `${filters.date}T00:00:00`)
-                     .lt('callback_datetime', `${filters.date}T23:59:59`);
+        // Filter by date - get callbacks for the entire day in local timezone
+        const startOfDay = new Date(`${filters.date}T00:00:00`);
+        const endOfDay = new Date(`${filters.date}T23:59:59`);
+        query = query
+          .gte('callback_datetime', startOfDay.toISOString())
+          .lt('callback_datetime', endOfDay.toISOString());
       }
 
       const { data: callbacks, error } = await query;
@@ -77,11 +102,12 @@ export function useCreateCallback() {
 
       if (error) throw error;
 
-      // Create notification
+      // Create notification with properly formatted time
+      const callbackDate = new Date(data.callback_datetime);
       await supabase.from('notifications').insert([{
         user_id: data.assigned_to,
         title: 'Callback Scheduled',
-        message: `A callback has been scheduled for ${new Date(data.callback_datetime).toLocaleString()}`,
+        message: `A callback has been scheduled for ${callbackDate.toLocaleString()}`,
         type: 'callback',
         related_entity_type: 'callback',
         related_entity_id: callback.id,

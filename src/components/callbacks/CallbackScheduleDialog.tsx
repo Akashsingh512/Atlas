@@ -35,7 +35,10 @@ export default function CallbackScheduleDialog({ leadId, leadName, trigger, onSu
       return;
     }
 
-    const callback_datetime = `${formData.callback_date}T${formData.callback_time}:00`;
+    // Create ISO datetime string - treat input as local time
+    // The database stores timestamp with time zone, so we need to send a proper ISO string
+    const localDateTime = new Date(`${formData.callback_date}T${formData.callback_time}:00`);
+    const callback_datetime = localDateTime.toISOString();
 
     await createCallback.mutateAsync({
       lead_id: leadId,
@@ -58,6 +61,7 @@ export default function CallbackScheduleDialog({ leadId, leadName, trigger, onSu
     });
   };
 
+  // Only show active users in assignment dropdown
   const activeUsers = users?.filter(u => u.is_active) || [];
 
   return (
