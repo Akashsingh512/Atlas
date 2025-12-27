@@ -3,6 +3,8 @@ import AppLayout from '@/components/layout/AppLayout';
 import { useAnalyticsConfig, useNotificationConfig, useUpdateAnalyticsConfig, useUpdateNotificationConfig, useUpdateOverdueConfig } from '@/hooks/useAnalyticsConfig';
 import { useOverdueConfig } from '@/hooks/useOverdue';
 import { useAnnouncements, useCreateAnnouncement, useUpdateAnnouncement, useDeleteAnnouncement } from '@/hooks/useAnnouncements';
+import StatusConfigTab from '@/components/settings/StatusConfigTab';
+import TicketsTab from '@/components/settings/TicketsTab';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,7 +19,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { LEAD_STATUS_CONFIG } from '@/types';
 import { 
   Clock, BarChart3, Bell, Megaphone, Loader2, Plus, Trash2, 
-  AlertTriangle, Settings, CheckCircle
+  AlertTriangle, Settings, CheckCircle, Tag, MessageSquare
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -422,7 +424,7 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="overdue" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="flex flex-wrap gap-1">
             <TabsTrigger value="overdue" className="gap-2">
               <Clock className="w-4 h-4" />
               <span className="hidden sm:inline">Overdue</span>
@@ -438,6 +440,14 @@ export default function SettingsPage() {
             <TabsTrigger value="announcements" className="gap-2">
               <Megaphone className="w-4 h-4" />
               <span className="hidden sm:inline">Announcements</span>
+            </TabsTrigger>
+            <TabsTrigger value="statuses" className="gap-2">
+              <Tag className="w-4 h-4" />
+              <span className="hidden sm:inline">Statuses</span>
+            </TabsTrigger>
+            <TabsTrigger value="tickets" className="gap-2">
+              <MessageSquare className="w-4 h-4" />
+              <span className="hidden sm:inline">Messages</span>
             </TabsTrigger>
           </TabsList>
 
@@ -493,6 +503,34 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent>
                 <AnnouncementsTab />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="statuses">
+            <Card>
+              <CardHeader>
+                <CardTitle>Lead Status Configuration</CardTitle>
+                <CardDescription>
+                  Add, edit, or disable lead status options
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <StatusConfigTab />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="tickets">
+            <Card>
+              <CardHeader>
+                <CardTitle>Messages / Tickets</CardTitle>
+                <CardDescription>
+                  Send messages to users and receive their replies
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TicketsTab />
               </CardContent>
             </Card>
           </TabsContent>
