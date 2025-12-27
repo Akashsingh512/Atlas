@@ -4,9 +4,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import NotificationsPanel from '@/components/notifications/NotificationsPanel';
 import { 
   TrendingUp, LayoutDashboard, Users, MapPin, FileText, 
-  MessageSquare, BarChart3, LogOut, Menu, Settings, History
+  MessageSquare, BarChart3, LogOut, Menu, Settings, History,
+  Calendar, Upload, Sliders
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -24,10 +26,13 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Leads', href: '/leads', icon: FileText },
+  { label: 'Meetings', href: '/meetings', icon: Calendar },
   { label: 'Users', href: '/users', icon: Users, adminOnly: true },
   { label: 'Locations', href: '/locations', icon: MapPin, adminOnly: true },
   { label: 'Templates', href: '/templates', icon: MessageSquare, adminOnly: true },
+  { label: 'Bulk Upload', href: '/bulk-upload', icon: Upload, adminOnly: true },
   { label: 'Analytics', href: '/analytics', icon: BarChart3, adminOnly: true },
+  { label: 'Settings', href: '/settings', icon: Sliders, adminOnly: true },
   { label: 'Activity Log', href: '/activity', icon: History, adminOnly: true },
 ];
 
@@ -132,16 +137,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
             </div>
             <span className="font-display font-bold">LeadFlow</span>
           </div>
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="w-5 h-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-72">
-              <Sidebar onClose={() => setMobileOpen(false)} />
-            </SheetContent>
-          </Sheet>
+          <div className="flex items-center gap-2">
+            <NotificationsPanel />
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-72">
+                <Sidebar onClose={() => setMobileOpen(false)} />
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
 

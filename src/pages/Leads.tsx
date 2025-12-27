@@ -4,19 +4,16 @@ import AppLayout from '@/components/layout/AppLayout';
 import { useLeads, LeadWithRelations } from '@/hooks/useLeads';
 import { useLocations } from '@/hooks/useLocations';
 import { useAuth } from '@/hooks/useAuth';
+import EnhancedLeadFormDialog from '@/components/leads/EnhancedLeadFormDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { useCreateLead } from '@/hooks/useLeads';
 import { LeadStatus, LEAD_STATUS_CONFIG } from '@/types';
 import { 
-  Search, Plus, Phone, MessageCircle, MapPin, User, 
-  Clock, Filter, Loader2, FileText 
+  Search, Phone, MessageCircle, MapPin, User, 
+  Clock, Filter, Loader2, FileText, Building, DollarSign
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -53,6 +50,18 @@ function LeadCard({ lead, onClick }: { lead: LeadWithRelations; onClick: () => v
                   {lead.location.name}
                 </span>
               )}
+              {(lead as any).property_type && (
+                <span className="flex items-center gap-1">
+                  <Building className="w-3 h-3" />
+                  {(lead as any).property_type}
+                </span>
+              )}
+              {(lead as any).budget && (
+                <span className="flex items-center gap-1">
+                  <DollarSign className="w-3 h-3" />
+                  {(lead as any).budget}
+                </span>
+              )}
               {lead.lead_source && (
                 <span className="flex items-center gap-1">
                   <User className="w-3 h-3" />
@@ -85,92 +94,6 @@ function LeadCard({ lead, onClick }: { lead: LeadWithRelations; onClick: () => v
   );
 }
 
-function CreateLeadDialog({ onSuccess }: { onSuccess: () => void }) {
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [locationId, setLocationId] = useState('');
-  const [leadSource, setLeadSource] = useState('');
-  const [notes, setNotes] = useState('');
-
-  const { data: locations } = useLocations();
-  const createLead = useCreateLead();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await createLead.mutateAsync({
-      name,
-      phone,
-      email: email || undefined,
-      location_id: locationId || undefined,
-      lead_source: leadSource || undefined,
-      notes: notes || undefined,
-    });
-    setOpen(false);
-    setName('');
-    setPhone('');
-    setEmail('');
-    setLocationId('');
-    setLeadSource('');
-    setNotes('');
-    onSuccess();
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="gradient" className="gap-2">
-          <Plus className="w-4 h-4" /> Add Lead
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Create New Lead</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone *</Label>
-            <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Select value={locationId} onValueChange={setLocationId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select location" />
-              </SelectTrigger>
-              <SelectContent>
-                {locations?.map((loc) => (
-                  <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="source">Lead Source</Label>
-            <Input id="source" value={leadSource} onChange={(e) => setLeadSource(e.target.value)} placeholder="e.g., Website, Referral" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
-          </div>
-          <Button type="submit" className="w-full" disabled={createLead.isPending}>
-            {createLead.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Lead'}
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export default function LeadsPage() {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
@@ -197,7 +120,7 @@ export default function LeadsPage() {
               {leads?.length || 0} leads found
             </p>
           </div>
-          {isAdmin && <CreateLeadDialog onSuccess={() => refetch()} />}
+          {isAdmin && <EnhancedLeadFormDialog onSuccess={() => refetch()} />}
         </div>
 
         {/* Filters */}

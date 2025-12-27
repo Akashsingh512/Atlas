@@ -4,6 +4,8 @@ import AppLayout from '@/components/layout/AppLayout';
 import { useLead, useFollowUps, useUpdateLead, useAddFollowUp, useDeleteLead } from '@/hooks/useLeads';
 import { useTemplates } from '@/hooks/useTemplates';
 import { useAuth } from '@/hooks/useAuth';
+import MeetingScheduleDialog from '@/components/meetings/MeetingScheduleDialog';
+import CallbackScheduleDialog from '@/components/callbacks/CallbackScheduleDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +16,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { LeadStatus, LEAD_STATUS_CONFIG } from '@/types';
 import { 
   ArrowLeft, Phone, MessageCircle, MapPin, User, 
-  Clock, Loader2, Send, Trash2, Mail, FileText
+  Clock, Loader2, Send, Trash2, Mail, FileText, Calendar, PhoneCall,
+  Building, DollarSign
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -107,13 +110,13 @@ export default function LeadDetailPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="flex gap-2">
-          <Button variant="call" className="flex-1 gap-2" onClick={handleCall}>
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="call" className="gap-2" onClick={handleCall}>
             <Phone className="w-4 h-4" /> Call
           </Button>
           <Dialog open={whatsappOpen} onOpenChange={setWhatsappOpen}>
             <DialogTrigger asChild>
-              <Button variant="whatsapp" className="flex-1 gap-2">
+              <Button variant="whatsapp" className="gap-2">
                 <MessageCircle className="w-4 h-4" /> WhatsApp
               </Button>
             </DialogTrigger>
@@ -155,6 +158,28 @@ export default function LeadDetailPage() {
           </Dialog>
         </div>
 
+        {/* Schedule Actions */}
+        <div className="grid grid-cols-2 gap-2">
+          <MeetingScheduleDialog 
+            leadId={lead.id} 
+            leadName={lead.name}
+            trigger={
+              <Button variant="outline" className="gap-2 w-full">
+                <Calendar className="w-4 h-4" /> Schedule Meeting
+              </Button>
+            }
+          />
+          <CallbackScheduleDialog 
+            leadId={lead.id} 
+            leadName={lead.name}
+            trigger={
+              <Button variant="outline" className="gap-2 w-full">
+                <PhoneCall className="w-4 h-4" /> Schedule Callback
+              </Button>
+            }
+          />
+        </div>
+
         {/* Lead Info */}
         <Card>
           <CardHeader>
@@ -171,6 +196,18 @@ export default function LeadDetailPage() {
               <div className="flex items-center gap-2 text-sm">
                 <MapPin className="w-4 h-4 text-muted-foreground" />
                 <span>{lead.location.name}</span>
+              </div>
+            )}
+            {(lead as any).property_type && (
+              <div className="flex items-center gap-2 text-sm">
+                <Building className="w-4 h-4 text-muted-foreground" />
+                <span>Property: {(lead as any).property_type}</span>
+              </div>
+            )}
+            {(lead as any).budget && (
+              <div className="flex items-center gap-2 text-sm">
+                <DollarSign className="w-4 h-4 text-muted-foreground" />
+                <span>Budget: {(lead as any).budget}</span>
               </div>
             )}
             {lead.lead_source && (
