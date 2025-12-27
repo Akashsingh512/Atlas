@@ -14,6 +14,9 @@ import LocationsPage from "./pages/LocationsPage";
 import TemplatesPage from "./pages/TemplatesPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import ActivityLogPage from "./pages/ActivityLogPage";
+import MeetingsPage from "./pages/MeetingsPage";
+import SettingsPage from "./pages/SettingsPage";
+import BulkUploadPage from "./pages/BulkUploadPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -66,11 +69,14 @@ const AppRoutes = () => (
     <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
     <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
     <Route path="/leads/:id" element={<ProtectedRoute><LeadDetail /></ProtectedRoute>} />
+    <Route path="/meetings" element={<ProtectedRoute><MeetingsPage /></ProtectedRoute>} />
     <Route path="/users" element={<ProtectedRoute adminOnly><UsersPage /></ProtectedRoute>} />
     <Route path="/locations" element={<ProtectedRoute adminOnly><LocationsPage /></ProtectedRoute>} />
     <Route path="/templates" element={<ProtectedRoute adminOnly><TemplatesPage /></ProtectedRoute>} />
     <Route path="/analytics" element={<ProtectedRoute adminOnly><AnalyticsPage /></ProtectedRoute>} />
     <Route path="/activity" element={<ProtectedRoute adminOnly><ActivityLogPage /></ProtectedRoute>} />
+    <Route path="/settings" element={<ProtectedRoute adminOnly><SettingsPage /></ProtectedRoute>} />
+    <Route path="/bulk-upload" element={<ProtectedRoute adminOnly><BulkUploadPage /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
