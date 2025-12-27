@@ -169,7 +169,18 @@ export function useCreateLead() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async (data: { name: string; phone: string; email?: string; location_id?: string; lead_source?: string; notes?: string; assigned_to?: string }) => {
+    mutationFn: async (data: { 
+      name: string; 
+      phone: string; 
+      email?: string; 
+      location_id?: string; 
+      lead_source?: string; 
+      notes?: string; 
+      assigned_to?: string;
+      property_type?: string;
+      budget?: string;
+      status?: LeadStatus;
+    }) => {
       const { data: lead, error } = await supabase
         .from('leads')
         .insert([{ ...data, created_by: user?.id }])
