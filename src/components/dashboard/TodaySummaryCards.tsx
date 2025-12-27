@@ -68,7 +68,7 @@ export default function TodaySummaryCards() {
                       <p className="font-medium text-sm">{meeting.lead?.name}</p>
                       <Badge variant="outline" className="text-xs">
                         <Clock className="w-3 h-3 mr-1" />
-                        {meeting.meeting_time}
+                        {meeting.meeting_time.slice(0, 5)}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">

@@ -138,7 +138,7 @@ export default function MeetingsPage() {
                         </div>
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Clock className="w-4 h-4" />
-                          <span>{meeting.meeting_time}</span>
+                          <span>{meeting.meeting_time.slice(0, 5)}</span>
                         </div>
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <MapPin className="w-4 h-4" />

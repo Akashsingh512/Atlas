@@ -4,6 +4,8 @@ import AppLayout from '@/components/layout/AppLayout';
 import { useLead, useFollowUps, useUpdateLead, useAddFollowUp, useDeleteLead } from '@/hooks/useLeads';
 import { useTemplates } from '@/hooks/useTemplates';
 import { useAuth } from '@/hooks/useAuth';
+import { useActiveUsers, useUsersByRole } from '@/hooks/useUsers';
+import { useLeadAssignmentHistory } from '@/hooks/useAssignmentHistory';
 import MeetingScheduleDialog from '@/components/meetings/MeetingScheduleDialog';
 import CallbackScheduleDialog from '@/components/callbacks/CallbackScheduleDialog';
 import { Button } from '@/components/ui/button';
@@ -13,22 +15,25 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { LeadStatus, LEAD_STATUS_CONFIG } from '@/types';
+import { LeadStatus, LEAD_STATUS_CONFIG, ROLE_CONFIG } from '@/types';
 import { 
   ArrowLeft, Phone, MessageCircle, MapPin, User, 
   Clock, Loader2, Send, Trash2, Mail, FileText, Calendar, PhoneCall,
-  Building, DollarSign
+  Building, DollarSign, UserPlus, History, ArrowRight
 } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function LeadDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { user, isAdmin, isPreSales, canAssignLeads, role } = useAuth();
   
   const { data: lead, isLoading } = useLead(id!);
   const { data: followUps, isLoading: followUpsLoading } = useFollowUps(id!);
   const { data: templates } = useTemplates();
+  const { data: assignmentHistory } = useLeadAssignmentHistory(id!);
+  const { data: activeUsers } = useActiveUsers();
+  const { data: salesUsers } = useUsersByRole(['sales']);
   
   const updateLead = useUpdateLead();
   const addFollowUp = useAddFollowUp();
@@ -37,6 +42,8 @@ export default function LeadDetailPage() {
   const [newComment, setNewComment] = useState('');
   const [whatsappMessage, setWhatsappMessage] = useState('');
   const [whatsappOpen, setWhatsappOpen] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [selectedAssignee, setSelectedAssignee] = useState('');
 
   if (isLoading) {
     return (
@@ -90,7 +97,38 @@ export default function LeadDetailPage() {
     navigate('/leads');
   };
 
+  const handleAssign = async () => {
+    if (!selectedAssignee) return;
+    await updateLead.mutateAsync({
+      id: lead.id,
+      data: { assigned_to: selectedAssignee },
+    });
+    setAssignOpen(false);
+    setSelectedAssignee('');
+  };
+
+  // Determine which users can be assigned based on current user's role
+  const getAssignableUsers = () => {
+    if (isAdmin) {
+      // Admins can assign to anyone
+      return activeUsers || [];
+    }
+    if (isPreSales) {
+      // Pre-sales can only assign to sales users
+      return salesUsers || [];
+    }
+    return [];
+  };
+
+  // Check if current user can assign this lead
+  const canAssignThisLead = () => {
+    if (isAdmin) return true;
+    if (isPreSales && lead.assigned_to === user?.id) return true;
+    return false;
+  };
+
   const statusConfig = LEAD_STATUS_CONFIG[lead.status];
+  const assignableUsers = getAssignableUsers();
 
   return (
     <AppLayout>
@@ -216,6 +254,12 @@ export default function LeadDetailPage() {
                 <span>Source: {lead.lead_source}</span>
               </div>
             )}
+            {lead.assigned_user && (
+              <div className="flex items-center gap-2 text-sm">
+                <UserPlus className="w-4 h-4 text-muted-foreground" />
+                <span>Assigned to: <strong>{lead.assigned_user.full_name}</strong></span>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-sm">
               <Clock className="w-4 h-4 text-muted-foreground" />
               <span>Created {format(new Date(lead.created_at), 'PPP')}</span>
@@ -227,6 +271,86 @@ export default function LeadDetailPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Assignment Section (for admins and pre-sales) */}
+        {canAssignThisLead() && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <UserPlus className="w-4 h-4" />
+                {isPreSales ? 'Transfer to Sales' : 'Assign Lead'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="w-full gap-2">
+                    <ArrowRight className="w-4 h-4" />
+                    {isPreSales ? 'Transfer to Sales Team' : 'Change Assignment'}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>
+                      {isPreSales ? 'Transfer Lead to Sales' : 'Assign Lead'}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select user" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {assignableUsers.map((u) => (
+                          <SelectItem key={u.user_id} value={u.user_id}>
+                            {u.full_name} {u.role && `(${ROLE_CONFIG[u.role]?.label || u.role})`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <DialogFooter>
+                    <Button onClick={handleAssign} disabled={!selectedAssignee || updateLead.isPending}>
+                      {updateLead.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Assign'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Assignment History */}
+        {assignmentHistory && assignmentHistory.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <History className="w-4 h-4" />
+                Assignment History
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {assignmentHistory.map((entry) => (
+                  <div key={entry.id} className="text-sm p-2 bg-secondary/50 rounded-lg">
+                    <div className="flex items-center gap-1">
+                      <span className="text-muted-foreground">
+                        {entry.from_user?.full_name || 'Unassigned'}
+                      </span>
+                      <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                      <span className="font-medium">
+                        {entry.to_user?.full_name || 'Unassigned'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      by {entry.by_user?.full_name || 'System'} • {format(new Date(entry.created_at), 'PPp')}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Status Update */}
         <Card>

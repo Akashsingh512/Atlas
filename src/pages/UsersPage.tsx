@@ -3,7 +3,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import { useUsers, useAssignRole, useAssignLocations, useUpdateUserStatus } from '@/hooks/useUsers';
 import { useLocations } from '@/hooks/useLocations';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -11,8 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AppRole } from '@/types';
-import { Search, Loader2, Users, MapPin, Shield, Mail, Phone } from 'lucide-react';
+import { AppRole, ROLE_CONFIG } from '@/types';
+import { Search, Loader2, Users, MapPin, Shield, Mail, Phone, AlertTriangle } from 'lucide-react';
 
 interface EditUserDialogProps {
   user: {
@@ -73,10 +73,19 @@ function EditUserDialog({ user, onClose }: EditUserDialogProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="user">User</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
+              {Object.entries(ROLE_CONFIG).map(([key, config]) => (
+                <SelectItem key={key} value={key}>
+                  <div className="flex flex-col">
+                    <span>{config.label}</span>
+                    <span className="text-xs text-muted-foreground">{config.description}</span>
+                  </div>
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
+          <p className="text-xs text-muted-foreground">
+            {ROLE_CONFIG[role]?.description}
+          </p>
         </div>
 
         {/* Locations */}
@@ -104,9 +113,20 @@ function EditUserDialog({ user, onClose }: EditUserDialogProps) {
         </div>
 
         {/* Status */}
-        <div className="flex items-center justify-between">
-          <Label>Active Status</Label>
-          <Switch checked={isActive} onCheckedChange={setIsActive} />
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label>Active Status</Label>
+            <Switch checked={isActive} onCheckedChange={setIsActive} />
+          </div>
+          {!isActive && (
+            <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-muted-foreground">
+                Inactive users can still view their historical data but won't receive new lead assignments 
+                and won't appear in assignment dropdowns.
+              </p>
+            </div>
+          )}
         </div>
       </div>
       <DialogFooter>
@@ -129,6 +149,15 @@ export default function UsersPage() {
     user.full_name.toLowerCase().includes(search.toLowerCase()) ||
     user.email.toLowerCase().includes(search.toLowerCase())
   );
+
+  const getRoleBadgeVariant = (role?: AppRole) => {
+    switch (role) {
+      case 'admin': return 'admin';
+      case 'pre_sales': return 'secondary';
+      case 'sales': return 'default';
+      default: return 'outline';
+    }
+  };
 
   return (
     <AppLayout>
@@ -172,14 +201,14 @@ export default function UsersPage() {
         ) : (
           <div className="grid gap-3">
             {filteredUsers?.map((user) => (
-              <Card key={user.id} className="animate-fade-in">
+              <Card key={user.id} className={`animate-fade-in ${!user.is_active ? 'opacity-60' : ''}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold truncate">{user.full_name}</h3>
-                        <Badge variant={user.role === 'admin' ? 'admin' : 'user'}>
-                          {user.role || 'user'}
+                        <Badge variant={getRoleBadgeVariant(user.role) as any}>
+                          {ROLE_CONFIG[user.role || 'user']?.label || 'User'}
                         </Badge>
                         {!user.is_active && (
                           <Badge variant="destructive">Inactive</Badge>

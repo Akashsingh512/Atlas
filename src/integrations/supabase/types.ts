@@ -234,6 +234,44 @@ export type Database = {
           },
         ]
       }
+      lead_assignment_history: {
+        Row: {
+          assigned_by: string
+          assigned_from: string | null
+          assigned_to: string | null
+          created_at: string
+          id: string
+          lead_id: string
+          notes: string | null
+        }
+        Insert: {
+          assigned_by: string
+          assigned_from?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          id?: string
+          lead_id: string
+          notes?: string | null
+        }
+        Update: {
+          assigned_by?: string
+          assigned_from?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_assignment_history_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           assigned_to: string | null
@@ -671,7 +709,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "pre_sales" | "sales"
       lead_status:
         | "open"
         | "follow_up"
@@ -806,7 +844,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "pre_sales", "sales"],
       lead_status: ["open", "follow_up", "closed", "junk", "future", "others"],
     },
   },
