@@ -1,6 +1,6 @@
 // Type definitions for LeadFlow
 
-export type AppRole = 'admin' | 'user';
+export type AppRole = 'admin' | 'user' | 'pre_sales' | 'sales';
 
 export type LeadStatus = 'open' | 'follow_up' | 'closed' | 'junk' | 'future' | 'others';
 
@@ -90,6 +90,16 @@ export interface ActivityLog {
   user?: Profile;
 }
 
+export interface LeadAssignmentHistory {
+  id: string;
+  lead_id: string;
+  assigned_from: string | null;
+  assigned_to: string | null;
+  assigned_by: string;
+  notes: string | null;
+  created_at: string;
+}
+
 // Form types
 export interface LoginFormData {
   email: string;
@@ -150,4 +160,12 @@ export const LEAD_STATUS_CONFIG: Record<LeadStatus, { label: string; color: stri
   junk: { label: 'Junk', color: 'junk' },
   future: { label: 'Future', color: 'future' },
   others: { label: 'Others', color: 'others' },
+};
+
+// Role configuration
+export const ROLE_CONFIG: Record<AppRole, { label: string; description: string; canAssignTo: AppRole[] }> = {
+  admin: { label: 'Admin', description: 'Full system access', canAssignTo: ['admin', 'user', 'pre_sales', 'sales'] },
+  user: { label: 'User', description: 'Standard user', canAssignTo: [] },
+  pre_sales: { label: 'Pre-Sales', description: 'Handle initial lead contact', canAssignTo: ['sales'] },
+  sales: { label: 'Sales', description: 'Close deals', canAssignTo: [] },
 };

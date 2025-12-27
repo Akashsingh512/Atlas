@@ -10,6 +10,9 @@ interface AuthContextType {
   role: AppRole | null;
   isLoading: boolean;
   isAdmin: boolean;
+  isPreSales: boolean;
+  isSales: boolean;
+  canAssignLeads: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -128,13 +131,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const isAdmin = role === 'admin';
+  const isPreSales = role === 'pre_sales';
+  const isSales = role === 'sales';
+  // Admins and Pre-Sales can assign leads to Sales
+  const canAssignLeads = isAdmin || isPreSales;
+
   const value = {
     user,
     session,
     profile,
     role,
     isLoading,
-    isAdmin: role === 'admin',
+    isAdmin,
+    isPreSales,
+    isSales,
+    canAssignLeads,
     signIn,
     signUp,
     signOut,

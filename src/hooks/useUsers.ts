@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Profile, UserRole, AppRole } from '@/types';
+import { Profile, AppRole } from '@/types';
 import { toast } from 'sonner';
 
 export interface UserWithRole extends Profile {
@@ -48,6 +48,24 @@ export function useUsers() {
       return users;
     },
   });
+}
+
+// Get only active users (for assignment dropdowns)
+export function useActiveUsers() {
+  const { data: users, ...rest } = useUsers();
+  return {
+    ...rest,
+    data: users?.filter(u => u.is_active) || [],
+  };
+}
+
+// Get users by role (for role-based assignment)
+export function useUsersByRole(roles: AppRole[]) {
+  const { data: users, ...rest } = useUsers();
+  return {
+    ...rest,
+    data: users?.filter(u => u.is_active && u.role && roles.includes(u.role)) || [],
+  };
 }
 
 export function useAssignRole() {
@@ -119,6 +137,15 @@ export function useUpdateUserStatus() {
         .eq('user_id', userId);
 
       if (error) throw error;
+
+      // Log the status change
+      await supabase.from('activity_logs').insert([{
+        user_id: userId,
+        action: isActive ? 'activated' : 'deactivated',
+        entity_type: 'user',
+        entity_id: userId,
+        new_value: { is_active: isActive },
+      }]);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
