@@ -202,6 +202,42 @@ export type Database = {
           },
         ]
       }
+      custom_statuses: {
+        Row: {
+          color: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          is_system: boolean
+          label: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          label: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          label?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       follow_ups: {
         Row: {
           comment: string
@@ -529,6 +565,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           phone: string | null
+          push_subscription: Json | null
           updated_at: string
           user_id: string
         }
@@ -539,6 +576,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           phone?: string | null
+          push_subscription?: Json | null
           updated_at?: string
           user_id: string
         }
@@ -549,10 +587,52 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           phone?: string | null
+          push_subscription?: Json | null
           updated_at?: string
           user_id?: string
         }
         Relationships: []
+      }
+      ticket_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          parent_id: string | null
+          recipient_id: string
+          sender_id: string
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          parent_id?: string | null
+          recipient_id: string
+          sender_id: string
+          subject: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          parent_id?: string | null
+          recipient_id?: string
+          sender_id?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_locations: {
         Row: {
