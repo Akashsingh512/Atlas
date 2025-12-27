@@ -87,7 +87,10 @@ export default function LeadDetailPage() {
   };
 
   const handleWhatsApp = () => {
-    const message = encodeURIComponent(whatsappMessage || `Hi ${lead.name}, `);
+    // Replace template variables with actual lead data, fallback to "there" if no name
+    let finalMessage = whatsappMessage || `Hi ${lead.name || 'there'}, `;
+    finalMessage = finalMessage.replace(/\{name\}/g, lead.name || 'there');
+    const message = encodeURIComponent(finalMessage);
     window.open(`https://wa.me/${lead.phone.replace(/\D/g, '')}?text=${message}`, '_blank');
     setWhatsappOpen(false);
   };
@@ -107,24 +110,14 @@ export default function LeadDetailPage() {
     setSelectedAssignee('');
   };
 
-  // Determine which users can be assigned based on current user's role
+  // All active users can be assigned - no role restrictions
   const getAssignableUsers = () => {
-    if (isAdmin) {
-      // Admins can assign to anyone
-      return activeUsers || [];
-    }
-    if (isPreSales) {
-      // Pre-sales can only assign to sales users
-      return salesUsers || [];
-    }
-    return [];
+    return activeUsers || [];
   };
 
-  // Check if current user can assign this lead
+  // Any authenticated user can assign leads
   const canAssignThisLead = () => {
-    if (isAdmin) return true;
-    if (isPreSales && lead.assigned_to === user?.id) return true;
-    return false;
+    return true;
   };
 
   const statusConfig = LEAD_STATUS_CONFIG[lead.status];
@@ -172,7 +165,7 @@ export default function LeadDetailPage() {
                           key={template.id}
                           variant="outline"
                           size="sm"
-                          onClick={() => setWhatsappMessage(template.message.replace('{name}', lead.name))}
+                          onClick={() => setWhatsappMessage(template.message.replace(/\{name\}/g, lead.name || 'there'))}
                         >
                           {template.name}
                         </Button>
@@ -272,13 +265,13 @@ export default function LeadDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Assignment Section (for admins and pre-sales) */}
+        {/* Assignment Section - any user can assign */}
         {canAssignThisLead() && (
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <UserPlus className="w-4 h-4" />
-                {isPreSales ? 'Transfer to Sales' : 'Assign Lead'}
+                Assign Lead
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -286,14 +279,12 @@ export default function LeadDetailPage() {
                 <DialogTrigger asChild>
                   <Button variant="outline" className="w-full gap-2">
                     <ArrowRight className="w-4 h-4" />
-                    {isPreSales ? 'Transfer to Sales Team' : 'Change Assignment'}
+                    Assign to User
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>
-                      {isPreSales ? 'Transfer Lead to Sales' : 'Assign Lead'}
-                    </DialogTitle>
+                    <DialogTitle>Assign Lead to User</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
                     <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
