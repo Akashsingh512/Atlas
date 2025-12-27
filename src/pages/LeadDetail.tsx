@@ -6,6 +6,8 @@ import { useTemplates } from '@/hooks/useTemplates';
 import { useAuth } from '@/hooks/useAuth';
 import { useActiveUsers, useUsersByRole } from '@/hooks/useUsers';
 import { useLeadAssignmentHistory } from '@/hooks/useAssignmentHistory';
+import { useLeadMeetings } from '@/hooks/useMeetings';
+import { useLeadCallbacks, formatCallbackDateTime } from '@/hooks/useCallbacks';
 import MeetingScheduleDialog from '@/components/meetings/MeetingScheduleDialog';
 import CallbackScheduleDialog from '@/components/callbacks/CallbackScheduleDialog';
 import { Button } from '@/components/ui/button';
@@ -19,7 +21,7 @@ import { LeadStatus, LEAD_STATUS_CONFIG, ROLE_CONFIG } from '@/types';
 import { 
   ArrowLeft, Phone, MessageCircle, MapPin, User, 
   Clock, Loader2, Send, Trash2, Mail, FileText, Calendar, PhoneCall,
-  Building, DollarSign, UserPlus, History, ArrowRight
+  Building, DollarSign, UserPlus, History, ArrowRight, Users
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -34,6 +36,8 @@ export default function LeadDetailPage() {
   const { data: assignmentHistory } = useLeadAssignmentHistory(id!);
   const { data: activeUsers } = useActiveUsers();
   const { data: salesUsers } = useUsersByRole(['sales']);
+  const { data: leadMeetings } = useLeadMeetings(id!);
+  const { data: leadCallbacks } = useLeadCallbacks(id!);
   
   const updateLead = useUpdateLead();
   const addFollowUp = useAddFollowUp();
@@ -265,7 +269,84 @@ export default function LeadDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Assignment Section - any user can assign */}
+        {/* Scheduled Callbacks */}
+        {leadCallbacks && leadCallbacks.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <PhoneCall className="w-4 h-4" />
+                Scheduled Callbacks ({leadCallbacks.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {leadCallbacks.map((callback) => (
+                  <div key={callback.id} className="p-3 bg-secondary/50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">
+                          {formatCallbackDateTime(callback.callback_datetime)}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Assigned to: {callback.assigned_user?.full_name || 'Unknown'}
+                        </p>
+                      </div>
+                      <Badge variant={callback.status === 'pending' ? 'default' : callback.status === 'completed' ? 'secondary' : 'destructive'}>
+                        {callback.status}
+                      </Badge>
+                    </div>
+                    {callback.notes && (
+                      <p className="text-xs text-muted-foreground mt-2">{callback.notes}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Scheduled Meetings */}
+        {leadMeetings && leadMeetings.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Scheduled Meetings ({leadMeetings.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {leadMeetings.map((meeting) => (
+                  <div key={meeting.id} className="p-3 bg-secondary/50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">
+                          {format(new Date(meeting.meeting_date), 'PPP')} at {meeting.meeting_time}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          <MapPin className="w-3 h-3 inline mr-1" />
+                          {meeting.meeting_place}
+                        </p>
+                        {meeting.participants && meeting.participants.length > 0 && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            <Users className="w-3 h-3 inline mr-1" />
+                            {meeting.participants.map(p => p.profile?.full_name).filter(Boolean).join(', ')}
+                          </p>
+                        )}
+                      </div>
+                      <Badge variant={meeting.status === 'scheduled' ? 'default' : meeting.status === 'completed' ? 'secondary' : 'destructive'}>
+                        {meeting.status}
+                      </Badge>
+                    </div>
+                    {meeting.notes && (
+                      <p className="text-xs text-muted-foreground mt-2">{meeting.notes}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
         {canAssignThisLead() && (
           <Card>
             <CardHeader>

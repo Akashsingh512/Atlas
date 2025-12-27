@@ -88,6 +88,40 @@ export function useTodayCallbacks() {
   return useCallbacks({ date: today, status: 'pending' });
 }
 
+export function useLeadCallbacks(leadId: string) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['lead-callbacks', leadId],
+    queryFn: async () => {
+      const { data: callbacks, error } = await supabase
+        .from('callbacks')
+        .select('*')
+        .eq('lead_id', leadId)
+        .order('callback_datetime', { ascending: false });
+
+      if (error) throw error;
+
+      // Fetch assigned users
+      const userIds = [...new Set(callbacks.map(c => c.assigned_to))];
+      let users: { user_id: string; full_name: string }[] = [];
+      if (userIds.length > 0) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('user_id, full_name')
+          .in('user_id', userIds);
+        users = data || [];
+      }
+
+      return callbacks.map(callback => ({
+        ...callback,
+        assigned_user: users.find(u => u.user_id === callback.assigned_to),
+      }));
+    },
+    enabled: !!user && !!leadId,
+  });
+}
+
 export function useCreateCallback() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -122,15 +156,40 @@ export function useCreateCallback() {
 
       if (error) throw error;
 
-      // Create notification with properly formatted time
-      await supabase.from('notifications').insert([{
-        user_id: data.assigned_to,
-        title: 'Callback Scheduled',
-        message: `A callback has been scheduled for ${callbackDate.toLocaleString()}`,
-        type: 'callback',
-        related_entity_type: 'callback',
-        related_entity_id: callback.id,
-      }]);
+      // Create notification for assigned user
+      if (data.assigned_to !== user?.id) {
+        await supabase.from('notifications').insert([{
+          user_id: data.assigned_to,
+          title: 'Callback Assigned',
+          message: `A callback has been assigned to you for ${callbackDate.toLocaleString()}`,
+          type: 'callback',
+          related_entity_type: 'callback',
+          related_entity_id: callback.id,
+        }]);
+      }
+
+      // Notify all admins about the new callback
+      const { data: adminRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'admin');
+      
+      if (adminRoles && adminRoles.length > 0) {
+        const adminNotifications = adminRoles
+          .filter(a => a.user_id !== user?.id && a.user_id !== data.assigned_to)
+          .map(admin => ({
+            user_id: admin.user_id,
+            title: 'New Callback Created',
+            message: `A callback has been scheduled for ${callbackDate.toLocaleString()}`,
+            type: 'callback',
+            related_entity_type: 'callback',
+            related_entity_id: callback.id,
+          }));
+        
+        if (adminNotifications.length > 0) {
+          await supabase.from('notifications').insert(adminNotifications);
+        }
+      }
 
       // Log activity
       await supabase.from('activity_logs').insert([{

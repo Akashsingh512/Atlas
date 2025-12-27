@@ -76,6 +76,57 @@ export function useTodayMeetings() {
   return useMeetings({ date: today, status: 'scheduled' });
 }
 
+export function useLeadMeetings(leadId: string) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['lead-meetings', leadId],
+    queryFn: async () => {
+      const { data: meetings, error } = await supabase
+        .from('meetings')
+        .select('*')
+        .eq('lead_id', leadId)
+        .order('meeting_date', { ascending: false })
+        .order('meeting_time', { ascending: false });
+
+      if (error) throw error;
+
+      // Fetch participants and their profiles
+      const meetingIds = meetings.map(m => m.id);
+      let participants: { meeting_id: string; user_id: string }[] = [];
+      let participantProfiles: { user_id: string; full_name: string }[] = [];
+
+      if (meetingIds.length > 0) {
+        const { data: participantsData } = await supabase
+          .from('meeting_participants')
+          .select('meeting_id, user_id')
+          .in('meeting_id', meetingIds);
+        participants = participantsData || [];
+
+        const userIds = [...new Set(participants.map(p => p.user_id))];
+        if (userIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, full_name')
+            .in('user_id', userIds);
+          participantProfiles = profiles || [];
+        }
+      }
+
+      return meetings.map(meeting => ({
+        ...meeting,
+        participants: participants
+          .filter(p => p.meeting_id === meeting.id)
+          .map(p => ({
+            ...p,
+            profile: participantProfiles.find(profile => profile.user_id === p.user_id),
+          })),
+      }));
+    },
+    enabled: !!user && !!leadId,
+  });
+}
+
 export function useCreateMeeting() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -118,8 +169,8 @@ export function useCreateMeeting() {
       // Create notifications for participants
       const notifications = participant_ids.map(userId => ({
         user_id: userId,
-        title: 'New Meeting Scheduled',
-        message: `A meeting has been scheduled for ${data.meeting_date} at ${data.meeting_time}`,
+        title: 'New Meeting Assigned',
+        message: `A meeting has been assigned to you for ${data.meeting_date} at ${data.meeting_time}`,
         type: 'meeting',
         related_entity_type: 'meeting',
         related_entity_id: meeting.id,
@@ -127,6 +178,29 @@ export function useCreateMeeting() {
 
       if (notifications.length > 0) {
         await supabase.from('notifications').insert(notifications);
+      }
+
+      // Notify all admins about the new meeting
+      const { data: adminRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'admin');
+      
+      if (adminRoles && adminRoles.length > 0) {
+        const adminNotifications = adminRoles
+          .filter(a => a.user_id !== user?.id) // Don't notify the creator if admin
+          .map(admin => ({
+            user_id: admin.user_id,
+            title: 'New Meeting Created',
+            message: `A meeting has been scheduled for ${data.meeting_date} at ${data.meeting_time}`,
+            type: 'meeting',
+            related_entity_type: 'meeting',
+            related_entity_id: meeting.id,
+          }));
+        
+        if (adminNotifications.length > 0) {
+          await supabase.from('notifications').insert(adminNotifications);
+        }
       }
 
       // Log activity
