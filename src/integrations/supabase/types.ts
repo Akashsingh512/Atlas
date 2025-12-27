@@ -47,6 +47,161 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_config: {
+        Row: {
+          created_at: string
+          description: string | null
+          excluded_statuses: string[]
+          id: string
+          included_statuses: string[]
+          metric_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          excluded_statuses?: string[]
+          id?: string
+          included_statuses?: string[]
+          metric_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          excluded_statuses?: string[]
+          id?: string
+          included_statuses?: string[]
+          metric_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      announcements: {
+        Row: {
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          message: string
+          priority: string
+          target_role: string | null
+          target_user_id: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          message: string
+          priority?: string
+          target_role?: string | null
+          target_user_id?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          message?: string
+          priority?: string
+          target_role?: string | null
+          target_user_id?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      bulk_uploads: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          duplicate_rows: number
+          error_report: Json | null
+          file_name: string
+          id: string
+          invalid_rows: number
+          status: string
+          total_rows: number
+          uploaded_by: string
+          valid_rows: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          duplicate_rows?: number
+          error_report?: Json | null
+          file_name: string
+          id?: string
+          invalid_rows?: number
+          status?: string
+          total_rows?: number
+          uploaded_by: string
+          valid_rows?: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          duplicate_rows?: number
+          error_report?: Json | null
+          file_name?: string
+          id?: string
+          invalid_rows?: number
+          status?: string
+          total_rows?: number
+          uploaded_by?: string
+          valid_rows?: number
+        }
+        Relationships: []
+      }
+      callbacks: {
+        Row: {
+          assigned_to: string
+          callback_datetime: string
+          created_at: string
+          created_by: string | null
+          id: string
+          lead_id: string
+          notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to: string
+          callback_datetime: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lead_id: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string
+          callback_datetime?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lead_id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "callbacks_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follow_ups: {
         Row: {
           comment: string
@@ -82,6 +237,7 @@ export type Database = {
       leads: {
         Row: {
           assigned_to: string | null
+          budget: string | null
           created_at: string
           created_by: string | null
           email: string | null
@@ -92,11 +248,13 @@ export type Database = {
           name: string
           notes: string | null
           phone: string
+          property_type: string | null
           status: Database["public"]["Enums"]["lead_status"]
           updated_at: string
         }
         Insert: {
           assigned_to?: string | null
+          budget?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -107,11 +265,13 @@ export type Database = {
           name: string
           notes?: string | null
           phone: string
+          property_type?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
         }
         Update: {
           assigned_to?: string | null
+          budget?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -122,6 +282,7 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string
+          property_type?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
         }
@@ -158,6 +319,166 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      meeting_participants: {
+        Row: {
+          created_at: string
+          id: string
+          meeting_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meeting_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meeting_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_participants_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meetings: {
+        Row: {
+          created_at: string
+          id: string
+          lead_id: string
+          meeting_date: string
+          meeting_place: string
+          meeting_time: string
+          notes: string | null
+          scheduled_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_id: string
+          meeting_date: string
+          meeting_place: string
+          meeting_time: string
+          notes?: string | null
+          scheduled_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_id?: string
+          meeting_date?: string
+          meeting_place?: string
+          meeting_time?: string
+          notes?: string | null
+          scheduled_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meetings_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_config: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          notification_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          notification_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          notification_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          related_entity_id: string | null
+          related_entity_type: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      overdue_config: {
+        Row: {
+          created_at: string
+          id: string
+          is_overdue_applicable: boolean
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_overdue_applicable?: boolean
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_overdue_applicable?: boolean
+          status?: string
           updated_at?: string
         }
         Relationships: []
@@ -224,6 +545,39 @@ export type Database = {
           },
         ]
       }
+      user_notification_preferences: {
+        Row: {
+          announcements_enabled: boolean
+          callbacks_enabled: boolean
+          created_at: string
+          id: string
+          meetings_enabled: boolean
+          overdue_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          announcements_enabled?: boolean
+          callbacks_enabled?: boolean
+          created_at?: string
+          id?: string
+          meetings_enabled?: boolean
+          overdue_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          announcements_enabled?: boolean
+          callbacks_enabled?: boolean
+          created_at?: string
+          id?: string
+          meetings_enabled?: boolean
+          overdue_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -241,6 +595,30 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_status_visibility: {
+        Row: {
+          can_view: boolean
+          created_at: string
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          can_view?: boolean
+          created_at?: string
+          id?: string
+          status: string
+          user_id: string
+        }
+        Update: {
+          can_view?: boolean
+          created_at?: string
+          id?: string
+          status?: string
           user_id?: string
         }
         Relationships: []
