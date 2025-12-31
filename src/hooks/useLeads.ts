@@ -28,6 +28,8 @@ interface FollowUpWithCreator {
   comment: string;
   created_by: string | null;
   created_at: string;
+  follow_up_date: string | null;
+  follow_up_time: string | null;
   creator?: { id: string; user_id: string; full_name: string } | null;
 }
 
@@ -284,10 +286,26 @@ export function useAddFollowUp() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ leadId, comment }: { leadId: string; comment: string }) => {
+    mutationFn: async ({ 
+      leadId, 
+      comment, 
+      follow_up_date, 
+      follow_up_time 
+    }: { 
+      leadId: string; 
+      comment: string; 
+      follow_up_date?: string | null;
+      follow_up_time?: string | null;
+    }) => {
       const { data, error } = await supabase
         .from('follow_ups')
-        .insert([{ lead_id: leadId, comment, created_by: user?.id }])
+        .insert([{ 
+          lead_id: leadId, 
+          comment, 
+          created_by: user?.id,
+          follow_up_date: follow_up_date || null,
+          follow_up_time: follow_up_time || null,
+        }])
         .select()
         .single();
 
@@ -298,6 +316,8 @@ export function useAddFollowUp() {
       queryClient.invalidateQueries({ queryKey: ['follow-ups', variables.leadId] });
       queryClient.invalidateQueries({ queryKey: ['lead', variables.leadId] });
       queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['overdue-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['today-followups'] });
       toast.success('Follow-up added');
     },
     onError: (error) => {

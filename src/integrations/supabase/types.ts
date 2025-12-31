@@ -243,6 +243,8 @@ export type Database = {
           comment: string
           created_at: string
           created_by: string | null
+          follow_up_date: string | null
+          follow_up_time: string | null
           id: string
           lead_id: string
         }
@@ -250,6 +252,8 @@ export type Database = {
           comment: string
           created_at?: string
           created_by?: string | null
+          follow_up_date?: string | null
+          follow_up_time?: string | null
           id?: string
           lead_id: string
         }
@@ -257,6 +261,8 @@ export type Database = {
           comment?: string
           created_at?: string
           created_by?: string | null
+          follow_up_date?: string | null
+          follow_up_time?: string | null
           id?: string
           lead_id?: string
         }
@@ -781,6 +787,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      user_can_access_lead: {
+        Args: { _lead_id: string; _user_id: string }
         Returns: boolean
       }
       user_has_location_access: {
