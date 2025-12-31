@@ -49,9 +49,9 @@ export default function PWAInstallPrompt() {
               <Download className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
-              <h4 className="font-semibold text-sm">Install LeadFlow</h4>
+              <h4 className="font-semibold text-sm">Install Atlas App</h4>
               <p className="text-xs text-muted-foreground mt-1">
-                Add to home screen for quick access and offline support
+                Add to home screen for quick access
               </p>
               <div className="flex gap-2 mt-3">
                 <Button size="sm" onClick={handleInstall}>Install</Button>
