@@ -5,12 +5,12 @@ import AppLayout from '@/components/layout/AppLayout';
 import { useLeads } from '@/hooks/useLeads';
 import { useUsers } from '@/hooks/useUsers';
 import { useLocations } from '@/hooks/useLocations';
+import { useStatusConfig } from '@/hooks/useStatusConfig';
 import OverdueSection from '@/components/dashboard/OverdueSection';
 import TodaySummaryCards from '@/components/dashboard/TodaySummaryCards';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { LEAD_STATUS_CONFIG, LeadStatus } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { 
   TrendingUp, Users, MapPin, FileText, BarChart3, 
@@ -24,6 +24,7 @@ export default function DashboardPage() {
   const { data: leads, isLoading: leadsLoading } = useLeads();
   const { data: users } = useUsers();
   const { data: locations } = useLocations();
+  const { activeStatuses, getStatusConfig, isLoading: statusesLoading } = useStatusConfig();
 
   // Invalidate overdue queries on dashboard load to ensure fresh data
   useEffect(() => {
@@ -155,16 +156,16 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              {Object.entries(LEAD_STATUS_CONFIG).map(([key, config]) => {
-                const count = leads?.filter(l => l.status === key).length || 0;
+              {activeStatuses.map((status) => {
+                const count = leads?.filter(l => l.status === status.name).length || 0;
                 return (
                   <div 
-                    key={key} 
+                    key={status.id} 
                     className="p-3 rounded-lg border text-center cursor-pointer hover:border-primary/50 transition-colors"
                     onClick={() => navigate('/leads')}
                   >
-                    <Badge variant={config.color as any} className="mb-2">
-                      {config.label}
+                    <Badge variant={status.color as any} className="mb-2">
+                      {status.label}
                     </Badge>
                     <p className="text-2xl font-bold">{count}</p>
                   </div>

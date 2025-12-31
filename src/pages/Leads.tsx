@@ -4,20 +4,20 @@ import AppLayout from '@/components/layout/AppLayout';
 import { useLeads, LeadWithRelations } from '@/hooks/useLeads';
 import { useLocations } from '@/hooks/useLocations';
 import { useAuth } from '@/hooks/useAuth';
+import { useStatusConfig } from '@/hooks/useStatusConfig';
 import EnhancedLeadFormDialog from '@/components/leads/EnhancedLeadFormDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LeadStatus, LEAD_STATUS_CONFIG } from '@/types';
 import { 
   Search, Phone, MessageCircle, MapPin, User, 
   Clock, Filter, Loader2, FileText, Building, DollarSign
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-function LeadCard({ lead, onClick }: { lead: LeadWithRelations; onClick: () => void }) {
+function LeadCard({ lead, onClick, getStatusConfig }: { lead: LeadWithRelations; onClick: () => void; getStatusConfig: (status: string) => { name: string; label: string; color: string } }) {
   const handleCall = (e: React.MouseEvent) => {
     e.stopPropagation();
     window.location.href = `tel:${lead.phone}`;
@@ -29,7 +29,7 @@ function LeadCard({ lead, onClick }: { lead: LeadWithRelations; onClick: () => v
     window.open(`https://wa.me/${lead.phone.replace(/\D/g, '')}?text=${message}`, '_blank');
   };
 
-  const statusConfig = LEAD_STATUS_CONFIG[lead.status];
+  const statusConfig = getStatusConfig(lead.status);
 
   return (
     <Card hover onClick={onClick} className="animate-fade-in">
@@ -98,11 +98,12 @@ export default function LeadsPage() {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<LeadStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [locationFilter, setLocationFilter] = useState<string>('all');
+  const { activeStatuses, getStatusConfig } = useStatusConfig();
 
   const { data: leads, isLoading, refetch } = useLeads({
-    status: statusFilter !== 'all' ? statusFilter : undefined,
+    status: statusFilter !== 'all' ? statusFilter as any : undefined,
     locationId: locationFilter !== 'all' ? locationFilter : undefined,
     search: search || undefined,
   });
@@ -134,15 +135,15 @@ export default function LeadsPage() {
               className="pl-9"
             />
           </div>
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as LeadStatus | 'all')}>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-40">
               <Filter className="w-4 h-4 mr-2" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              {Object.entries(LEAD_STATUS_CONFIG).map(([key, config]) => (
-                <SelectItem key={key} value={key}>{config.label}</SelectItem>
+              {activeStatuses.map((status) => (
+                <SelectItem key={status.id} value={status.name}>{status.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -182,6 +183,7 @@ export default function LeadsPage() {
                 key={lead.id} 
                 lead={lead} 
                 onClick={() => navigate(`/leads/${lead.id}`)}
+                getStatusConfig={getStatusConfig}
               />
             ))}
           </div>

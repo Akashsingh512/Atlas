@@ -8,6 +8,7 @@ import { useActiveUsers, useUsersByRole } from '@/hooks/useUsers';
 import { useLeadAssignmentHistory } from '@/hooks/useAssignmentHistory';
 import { useLeadMeetings } from '@/hooks/useMeetings';
 import { useLeadCallbacks, formatCallbackDateTime } from '@/hooks/useCallbacks';
+import { useStatusConfig } from '@/hooks/useStatusConfig';
 import MeetingScheduleDialog from '@/components/meetings/MeetingScheduleDialog';
 import CallbackScheduleDialog from '@/components/callbacks/CallbackScheduleDialog';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { LeadStatus, LEAD_STATUS_CONFIG, ROLE_CONFIG } from '@/types';
+import { ROLE_CONFIG } from '@/types';
 import { 
   ArrowLeft, Phone, MessageCircle, MapPin, User, 
   Clock, Loader2, Send, Trash2, Mail, FileText, Calendar, PhoneCall,
@@ -40,6 +41,7 @@ export default function LeadDetailPage() {
   const { data: salesUsers } = useUsersByRole(['sales']);
   const { data: leadMeetings } = useLeadMeetings(id!);
   const { data: leadCallbacks } = useLeadCallbacks(id!);
+  const { activeStatuses, getStatusConfig } = useStatusConfig();
   
   const updateLead = useUpdateLead();
   const addFollowUp = useAddFollowUp();
@@ -76,10 +78,10 @@ export default function LeadDetailPage() {
     );
   }
 
-  const handleStatusChange = async (newStatus: LeadStatus) => {
+  const handleStatusChange = async (newStatus: string) => {
     await updateLead.mutateAsync({
       id: lead.id,
-      data: { status: newStatus },
+      data: { status: newStatus as any },
       oldStatus: lead.status,
     });
   };
@@ -135,7 +137,7 @@ export default function LeadDetailPage() {
     return true;
   };
 
-  const statusConfig = LEAD_STATUS_CONFIG[lead.status];
+  const statusConfig = getStatusConfig(lead.status);
   const assignableUsers = getAssignableUsers();
 
   return (
@@ -441,13 +443,13 @@ export default function LeadDetailPage() {
             <CardTitle className="text-base">Update Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <Select value={lead.status} onValueChange={(v) => handleStatusChange(v as LeadStatus)}>
+            <Select value={lead.status} onValueChange={handleStatusChange}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(LEAD_STATUS_CONFIG).map(([key, config]) => (
-                  <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                {activeStatuses.map((status) => (
+                  <SelectItem key={status.id} value={status.name}>{status.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
