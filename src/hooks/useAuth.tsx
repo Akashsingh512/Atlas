@@ -29,30 +29,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUserData = async (userId: string) => {
+    // Clear potentially stale data first (prevents privilege leakage between sessions)
+    setProfile(null);
+    setRole(null);
+
     try {
       // Fetch profile
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
 
-      if (profileData) {
-        setProfile(profileData as Profile);
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
       }
 
+      setProfile(profileData ? (profileData as Profile) : null);
+
       // Fetch role
-      const { data: roleData } = await supabase
+      const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
         .maybeSingle();
 
-      if (roleData) {
-        setRole(roleData.role as AppRole);
+      if (roleError) {
+        console.error('Error fetching role:', roleError);
       }
+
+      // If no row exists, treat as normal user (secure default)
+      setRole(roleData?.role ? (roleData.role as AppRole) : 'user');
     } catch (error) {
       console.error('Error fetching user data:', error);
+      // Secure defaults
+      setProfile(null);
+      setRole('user');
     }
   };
 
@@ -63,19 +75,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
-        // Defer data fetching to avoid deadlock
         if (newSession?.user) {
+          // Prevent stale role/profile leaking between accounts
+          setIsLoading(true);
+          setProfile(null);
+          setRole(null);
+
+          // Defer data fetching to avoid deadlock
           setTimeout(() => {
-            fetchUserData(newSession.user.id);
+            fetchUserData(newSession.user.id).finally(() => {
+              setIsLoading(false);
+            });
           }, 0);
         } else {
           setProfile(null);
           setRole(null);
+          setIsLoading(false);
         }
 
         if (event === 'SIGNED_OUT') {
           setProfile(null);
           setRole(null);
+          setIsLoading(false);
         }
       }
     );
