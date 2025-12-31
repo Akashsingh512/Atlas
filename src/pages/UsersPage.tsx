@@ -27,23 +27,60 @@ interface EditUserDialogProps {
 }
 
 function EditUserDialog({ user, onClose }: EditUserDialogProps) {
-  const [role, setRole] = useState<AppRole>(user.role || 'user');
+  const [role, setRole] = useState<AppRole | undefined>(user.role);
   const [selectedLocations, setSelectedLocations] = useState<string[]>(
     user.locations?.map(l => l.id) || []
   );
   const [isActive, setIsActive] = useState(user.is_active);
+  const [hasRoleChanged, setHasRoleChanged] = useState(false);
+  const [hasLocationsChanged, setHasLocationsChanged] = useState(false);
+  const [hasStatusChanged, setHasStatusChanged] = useState(false);
 
   const { data: locations } = useLocations();
   const assignRole = useAssignRole();
   const assignLocations = useAssignLocations();
   const updateStatus = useUpdateUserStatus();
 
+  const handleRoleChange = (newRole: AppRole) => {
+    setRole(newRole);
+    setHasRoleChanged(true);
+  };
+
+  const handleLocationToggle = (locationId: string) => {
+    setSelectedLocations(prev => 
+      prev.includes(locationId) 
+        ? prev.filter(id => id !== locationId)
+        : [...prev, locationId]
+    );
+    setHasLocationsChanged(true);
+  };
+
+  const handleStatusChange = (checked: boolean) => {
+    setIsActive(checked);
+    setHasStatusChanged(true);
+  };
+
   const handleSave = async () => {
-    await Promise.all([
-      assignRole.mutateAsync({ userId: user.user_id, role }),
-      assignLocations.mutateAsync({ userId: user.user_id, locationIds: selectedLocations }),
-      updateStatus.mutateAsync({ userId: user.user_id, isActive }),
-    ]);
+    const promises: Promise<void>[] = [];
+    
+    // Only update role if it was explicitly changed
+    if (hasRoleChanged && role) {
+      promises.push(assignRole.mutateAsync({ userId: user.user_id, role }));
+    }
+    
+    // Only update locations if they were changed
+    if (hasLocationsChanged) {
+      promises.push(assignLocations.mutateAsync({ userId: user.user_id, locationIds: selectedLocations }));
+    }
+    
+    // Only update status if it was changed
+    if (hasStatusChanged) {
+      promises.push(updateStatus.mutateAsync({ userId: user.user_id, isActive }));
+    }
+    
+    if (promises.length > 0) {
+      await Promise.all(promises);
+    }
     onClose();
   };
 
@@ -68,9 +105,9 @@ function EditUserDialog({ user, onClose }: EditUserDialogProps) {
           <Label className="flex items-center gap-2">
             <Shield className="w-4 h-4" /> Role
           </Label>
-          <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
+          <Select value={role || ''} onValueChange={handleRoleChange}>
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue placeholder="Select role..." />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(ROLE_CONFIG).map(([key, config]) => (
@@ -83,9 +120,11 @@ function EditUserDialog({ user, onClose }: EditUserDialogProps) {
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">
-            {ROLE_CONFIG[role]?.description}
-          </p>
+          {role && (
+            <p className="text-xs text-muted-foreground">
+              {ROLE_CONFIG[role]?.description}
+            </p>
+          )}
         </div>
 
         {/* Locations */}
@@ -99,7 +138,7 @@ function EditUserDialog({ user, onClose }: EditUserDialogProps) {
                 <Checkbox 
                   id={location.id}
                   checked={selectedLocations.includes(location.id)}
-                  onCheckedChange={() => toggleLocation(location.id)}
+                  onCheckedChange={() => handleLocationToggle(location.id)}
                 />
                 <label htmlFor={location.id} className="text-sm cursor-pointer">
                   {location.name}
@@ -116,7 +155,7 @@ function EditUserDialog({ user, onClose }: EditUserDialogProps) {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label>Active Status</Label>
-            <Switch checked={isActive} onCheckedChange={setIsActive} />
+            <Switch checked={isActive} onCheckedChange={handleStatusChange} />
           </div>
           {!isActive && (
             <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
