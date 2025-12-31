@@ -19,7 +19,7 @@ export default function Index() {
             <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-glow">
               <TrendingUp className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-display font-bold">LeadFlow</span>
+            <span className="text-xl font-display font-bold">Atlas</span>
           </div>
           <Link to="/auth">
             <Button variant="outline">Sign In</Button>
@@ -34,7 +34,7 @@ export default function Index() {
               <span className="text-gradient">Effortlessly</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              LeadFlow helps your sales team track, manage, and convert leads with powerful 
+              Atlas helps your sales team track, manage, and convert leads with powerful 
               location-based visibility, instant communication, and real-time analytics.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
@@ -82,7 +82,7 @@ export default function Index() {
       {/* Footer */}
       <footer className="py-8 border-t">
         <div className="container text-center text-sm text-muted-foreground">
-          <p>© 2024 LeadFlow. Built for sales teams.</p>
+          <p>© 2025 Atlas. Built for sales teams.</p>
         </div>
       </footer>
     </div>

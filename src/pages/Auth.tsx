@@ -84,7 +84,7 @@ export default function AuthPage() {
             toast.error(error.message);
           }
         } else {
-          toast.success('Account created! Welcome to LeadFlow.');
+          toast.success('Account created! Welcome to Atlas.');
           navigate('/dashboard');
         }
       }

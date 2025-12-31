@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt'],
       manifest: {
-        name: 'LeadFlow CRM',
-        short_name: 'LeadFlow',
+        name: 'Atlas',
+        short_name: 'Atlas',
         description: 'Lead Management CRM Application',
         theme_color: '#6366f1',
         background_color: '#0f0a1f',

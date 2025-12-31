@@ -1,4 +1,4 @@
-// Extended types for LeadFlow advanced features
+// Extended types for Atlas advanced features
 
 import { LeadStatus } from './index';
 

@@ -1,4 +1,4 @@
-// Type definitions for LeadFlow
+// Type definitions for Atlas CRM Application
 
 export type AppRole = 'admin' | 'user' | 'pre_sales' | 'sales';
 

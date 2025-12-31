@@ -136,7 +136,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
               <TrendingUp className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-display font-bold">LeadFlow</span>
+            <span className="font-display font-bold">Atlas</span>
           </div>
           <div className="flex items-center gap-2">
             <NotificationsPanel />

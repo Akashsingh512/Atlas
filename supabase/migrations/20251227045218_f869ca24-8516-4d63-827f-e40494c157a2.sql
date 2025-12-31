@@ -1,6 +1,6 @@
 
 -- =====================================================
--- LeadFlow Extended Features Migration
+-- Atlas nded Features Migration
 -- =====================================================
 
 -- 1. Add new columns to leads table for property details
