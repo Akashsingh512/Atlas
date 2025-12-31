@@ -110,13 +110,38 @@ export function useSendTicket() {
 
       if (error) throw error;
 
-      // Also create a notification for the recipient
+      // Also create a notification for the recipient with thread ID
+      const { data: senderProfile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', user!.id)
+        .single();
+
+      const senderName = senderProfile?.full_name || 'Someone';
+      
+      // Get the root thread ID for deep linking
+      let threadId = data.parent_id;
+      if (!threadId) {
+        // This is a new thread, get the ID of the message we just inserted
+        const { data: newMsg } = await supabase
+          .from('ticket_messages')
+          .select('id')
+          .eq('sender_id', user!.id)
+          .eq('recipient_id', data.recipient_id)
+          .eq('subject', data.subject)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        threadId = newMsg?.id;
+      }
+
       await supabase.from('notifications').insert([{
         user_id: data.recipient_id,
-        title: data.parent_id ? 'New Reply to Your Message' : 'New Message from Admin',
+        title: data.parent_id ? `New reply from ${senderName}` : `New message from ${senderName}`,
         message: data.subject,
         type: 'ticket',
         related_entity_type: 'ticket',
+        related_entity_id: threadId,
       }]);
     },
     onSuccess: () => {

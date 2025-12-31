@@ -56,7 +56,8 @@ export function useRealtimeNotifications() {
   useEffect(() => {
     if (!user || Notification.permission !== 'granted') return;
 
-    const channel = supabase
+    // Listen for notifications table changes
+    const notificationsChannel = supabase
       .channel('notifications-realtime')
       .on(
         'postgres_changes',
@@ -76,8 +77,30 @@ export function useRealtimeNotifications() {
       )
       .subscribe();
 
+    // Listen for new ticket messages
+    const ticketsChannel = supabase
+      .channel('tickets-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'ticket_messages',
+          filter: `recipient_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const message = payload.new as { subject: string; message: string };
+          showLocalNotification('New Message', {
+            body: message.subject,
+            tag: 'message',
+          });
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(notificationsChannel);
+      supabase.removeChannel(ticketsChannel);
     };
   }, [user]);
 }
