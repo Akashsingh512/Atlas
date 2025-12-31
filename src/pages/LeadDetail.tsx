@@ -21,9 +21,11 @@ import { LeadStatus, LEAD_STATUS_CONFIG, ROLE_CONFIG } from '@/types';
 import { 
   ArrowLeft, Phone, MessageCircle, MapPin, User, 
   Clock, Loader2, Send, Trash2, Mail, FileText, Calendar, PhoneCall,
-  Building, DollarSign, UserPlus, History, ArrowRight, Users
+  Building, DollarSign, UserPlus, History, ArrowRight, Users, CalendarClock
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function LeadDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -44,6 +46,8 @@ export default function LeadDetailPage() {
   const deleteLead = useDeleteLead();
 
   const [newComment, setNewComment] = useState('');
+  const [followUpDate, setFollowUpDate] = useState('');
+  const [followUpTime, setFollowUpTime] = useState('');
   const [whatsappMessage, setWhatsappMessage] = useState('');
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
@@ -82,8 +86,15 @@ export default function LeadDetailPage() {
 
   const handleAddFollowUp = async () => {
     if (!newComment.trim()) return;
-    await addFollowUp.mutateAsync({ leadId: lead.id, comment: newComment });
+    await addFollowUp.mutateAsync({ 
+      leadId: lead.id, 
+      comment: newComment,
+      follow_up_date: followUpDate || null,
+      follow_up_time: followUpTime || null,
+    });
     setNewComment('');
+    setFollowUpDate('');
+    setFollowUpTime('');
   };
 
   const handleCall = () => {
@@ -453,13 +464,42 @@ export default function LeadDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Add new follow-up */}
-            <div className="flex gap-2">
+            <div className="space-y-3">
               <Textarea
                 placeholder="Add a follow-up comment..."
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 className="min-h-[80px]"
               />
+              
+              {/* Optional Date and Time */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                    <CalendarClock className="w-3 h-3" />
+                    Schedule Date (optional)
+                  </Label>
+                  <Input
+                    type="date"
+                    value={followUpDate}
+                    onChange={(e) => setFollowUpDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="h-9"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    Time (optional)
+                  </Label>
+                  <Input
+                    type="time"
+                    value={followUpTime}
+                    onChange={(e) => setFollowUpTime(e.target.value)}
+                    className="h-9"
+                  />
+                </div>
+              </div>
             </div>
             <Button 
               onClick={handleAddFollowUp} 
@@ -467,7 +507,7 @@ export default function LeadDetailPage() {
               className="w-full gap-2"
             >
               {addFollowUp.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              Add Follow-up
+              {followUpDate ? 'Schedule Follow-up' : 'Add Follow-up'}
             </Button>
 
             {/* Follow-up list */}
@@ -487,6 +527,15 @@ export default function LeadDetailPage() {
                       <span>•</span>
                       <span>{format(new Date(followUp.created_at), 'PPp')}</span>
                     </div>
+                    {followUp.follow_up_date && (
+                      <div className="flex items-center gap-1 mt-1 text-xs text-primary">
+                        <CalendarClock className="w-3 h-3" />
+                        <span>
+                          Scheduled: {followUp.follow_up_date}
+                          {followUp.follow_up_time && ` at ${followUp.follow_up_time.slice(0, 5)}`}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

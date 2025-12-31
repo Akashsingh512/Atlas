@@ -5,6 +5,7 @@ import { useOverdueConfig } from '@/hooks/useOverdue';
 import { useAnnouncements, useCreateAnnouncement, useUpdateAnnouncement, useDeleteAnnouncement } from '@/hooks/useAnnouncements';
 import StatusConfigTab from '@/components/settings/StatusConfigTab';
 import TicketsTab from '@/components/settings/TicketsTab';
+import AdminLocationSettings from '@/components/settings/AdminLocationSettings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +20,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { LEAD_STATUS_CONFIG } from '@/types';
 import { 
   Clock, BarChart3, Bell, Megaphone, Loader2, Plus, Trash2, 
-  AlertTriangle, Settings, CheckCircle, Tag, MessageSquare
+  AlertTriangle, Settings, CheckCircle, Tag, MessageSquare, MapPin
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -449,6 +450,10 @@ export default function SettingsPage() {
               <MessageSquare className="w-4 h-4" />
               <span className="hidden sm:inline">Messages</span>
             </TabsTrigger>
+            <TabsTrigger value="locations" className="gap-2">
+              <MapPin className="w-4 h-4" />
+              <span className="hidden sm:inline">Locations</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overdue">
@@ -530,9 +535,13 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <TicketsTab />
+              <TicketsTab />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="locations">
+            <AdminLocationSettings />
           </TabsContent>
         </Tabs>
       </div>
