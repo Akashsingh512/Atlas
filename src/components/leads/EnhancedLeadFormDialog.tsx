@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useLocations } from '@/hooks/useLocations';
+import { useLocationsWithSubLocations, useSubLocations } from '@/hooks/useLocations';
 import { useUsers } from '@/hooks/useUsers';
 import { useCreateLead } from '@/hooks/useLeads';
 import { LEAD_STATUS_CONFIG, LeadStatus } from '@/types';
@@ -44,6 +44,7 @@ export default function EnhancedLeadFormDialog({ onSuccess }: EnhancedLeadFormDi
     phone: '',
     email: '',
     location_id: '',
+    sub_location_id: '',
     property_type: '',
     budget: '',
     lead_source: '',
@@ -52,9 +53,18 @@ export default function EnhancedLeadFormDialog({ onSuccess }: EnhancedLeadFormDi
     notes: '',
   });
 
-  const { data: locations } = useLocations();
+  const { data: locations } = useLocationsWithSubLocations();
   const { data: users } = useUsers();
   const createLead = useCreateLead();
+
+  // Get sub-locations for selected city
+  const selectedLocation = locations?.find(l => l.id === formData.location_id);
+  const subLocations = selectedLocation?.sub_locations?.filter(s => s.is_active) || [];
+
+  // Reset sub-location when location changes
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, sub_location_id: '' }));
+  }, [formData.location_id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +79,7 @@ export default function EnhancedLeadFormDialog({ onSuccess }: EnhancedLeadFormDi
       phone: formData.phone,
       email: formData.email || undefined,
       location_id: formData.location_id,
+      sub_location_id: formData.sub_location_id || undefined,
       lead_source: formData.lead_source || undefined,
       notes: formData.notes || undefined,
       assigned_to: formData.assigned_to || undefined,
@@ -88,6 +99,7 @@ export default function EnhancedLeadFormDialog({ onSuccess }: EnhancedLeadFormDi
       phone: '',
       email: '',
       location_id: '',
+      sub_location_id: '',
       property_type: '',
       budget: '',
       lead_source: '',
@@ -136,21 +148,40 @@ export default function EnhancedLeadFormDialog({ onSuccess }: EnhancedLeadFormDi
               </div>
             </div>
 
-            <div className="space-y-1">
-              <Label htmlFor="location" className="text-sm">Location *</Label>
-              <Select 
-                value={formData.location_id} 
-                onValueChange={(v) => setFormData(prev => ({ ...prev, location_id: v }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select location" />
-                </SelectTrigger>
-                <SelectContent>
-                  {locations?.filter(l => l.is_active).map((loc) => (
-                    <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="location" className="text-sm">City *</Label>
+                <Select 
+                  value={formData.location_id} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, location_id: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select city" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations?.filter(l => l.is_active).map((loc) => (
+                      <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="sub_location" className="text-sm">Office / Branch</Label>
+                <Select 
+                  value={formData.sub_location_id} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, sub_location_id: v }))}
+                  disabled={!formData.location_id || subLocations.length === 0}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={subLocations.length === 0 ? "No offices" : "Select office"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subLocations.map((sub) => (
+                      <SelectItem key={sub.id} value={sub.id}>{sub.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

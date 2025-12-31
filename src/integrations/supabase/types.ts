@@ -330,6 +330,7 @@ export type Database = {
           phone: string
           property_type: string | null
           status: Database["public"]["Enums"]["lead_status"]
+          sub_location_id: string | null
           updated_at: string
         }
         Insert: {
@@ -347,6 +348,7 @@ export type Database = {
           phone: string
           property_type?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
+          sub_location_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -364,6 +366,7 @@ export type Database = {
           phone?: string
           property_type?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
+          sub_location_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -372,6 +375,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_sub_location_id_fkey"
+            columns: ["sub_location_id"]
+            isOneToOne: false
+            referencedRelation: "sub_locations"
             referencedColumns: ["id"]
           },
         ]
@@ -598,6 +608,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      sub_locations: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          location_id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          location_id: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          location_id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sub_locations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ticket_messages: {
         Row: {

@@ -29,6 +29,20 @@ export interface Location {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // Joined
+  sub_locations?: SubLocation[];
+}
+
+export interface SubLocation {
+  id: string;
+  location_id: string;
+  name: string;
+  address: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  // Joined
+  location?: Location;
 }
 
 export interface UserLocation {
@@ -44,6 +58,7 @@ export interface Lead {
   phone: string;
   email: string | null;
   location_id: string | null;
+  sub_location_id: string | null;
   lead_source: string | null;
   status: LeadStatus;
   assigned_to: string | null;
@@ -54,6 +69,7 @@ export interface Lead {
   updated_at: string;
   // Joined fields
   location?: Location;
+  sub_location?: SubLocation;
   assigned_user?: Profile;
 }
 
@@ -61,6 +77,8 @@ export interface FollowUp {
   id: string;
   lead_id: string;
   comment: string;
+  follow_up_date: string | null;
+  follow_up_time: string | null;
   created_by: string | null;
   created_at: string;
   // Joined fields
@@ -117,6 +135,7 @@ export interface LeadFormData {
   phone: string;
   email?: string;
   location_id?: string;
+  sub_location_id?: string;
   lead_source?: string;
   notes?: string;
   assigned_to?: string;
