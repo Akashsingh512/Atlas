@@ -73,11 +73,12 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
       {/* Logo */}
       <div className="p-4 border-b">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-glow">
+          {/* <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-glow">
             <TrendingUp className="w-5 h-5 text-primary-foreground" />
-          </div>
+          </div> */}
+          <img src="/logo.png" alt="Atlas Logo" className="w-10 h-10" />
           <div>
-            <span className="text-lg font-display font-bold">LeadFlow</span>
+            <span className="text-lg font-display font-bold">Atlas</span>
             <Badge variant={isAdmin ? 'admin' : 'user'} className="ml-2 text-[10px]">
               {role || 'user'}
             </Badge>

@@ -103,11 +103,12 @@ export default function AuthPage() {
 
       {/* Logo and Title */}
       <div className="flex items-center gap-3 mb-8 animate-fade-in">
-        <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-glow">
+        {/* <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-glow">
           <TrendingUp className="w-6 h-6 text-primary-foreground" />
-        </div>
+        </div> */}
+        <img src="/logo.png" alt="Atlas Logo" className="w-12 h-12" />
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">LeadFlow</h1>
+          <h1 className="text-2xl font-display font-bold text-foreground">Atlas - By Houzlook</h1>
           <p className="text-sm text-muted-foreground">Sales Lead Tracker</p>
         </div>
       </div>
@@ -120,8 +121,7 @@ export default function AuthPage() {
           </CardTitle>
           <CardDescription>
             {isLogin 
-              ? 'Sign in to access your dashboard' 
-              : 'Get started with LeadFlow today'}
+              ? 'Sign in to access your dashboard' : 'Get started with Atlas today' }
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -132,7 +132,7 @@ export default function AuthPage() {
                 <Input
                   id="fullName"
                   type="text"
-                  placeholder="John Doe"
+                  placeholder="Your Name"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className={errors.fullName ? 'border-destructive' : ''}

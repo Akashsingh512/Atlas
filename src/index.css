@@ -128,7 +128,9 @@
 
 @layer utilities {
   .gradient-primary {
-    background: var(--gradient-primary);
+    /* background: var(--gradient-primary);
+     */
+     background: red;
   }
   
   .gradient-accent {

@@ -73,7 +73,7 @@ function RealtimeNotificationsProvider({ children }: { children: React.ReactNode
 const AppRoutes = () => (
   <RealtimeNotificationsProvider>
     <Routes>
-      <Route path="/" element={<Index />} />
+      <Route path="/" element={<AuthRoute><Auth /></AuthRoute>} />
       <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
