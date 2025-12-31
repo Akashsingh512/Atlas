@@ -19,6 +19,7 @@ import ActivityLogPage from "./pages/ActivityLogPage";
 import MeetingsPage from "./pages/MeetingsPage";
 import SettingsPage from "./pages/SettingsPage";
 import BulkUploadPage from "./pages/BulkUploadPage";
+import MessagesPage from "./pages/MessagesPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -79,6 +80,7 @@ const AppRoutes = () => (
       <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
       <Route path="/leads/:id" element={<ProtectedRoute><LeadDetail /></ProtectedRoute>} />
       <Route path="/meetings" element={<ProtectedRoute><MeetingsPage /></ProtectedRoute>} />
+      <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute adminOnly><UsersPage /></ProtectedRoute>} />
       <Route path="/locations" element={<ProtectedRoute adminOnly><LocationsPage /></ProtectedRoute>} />
       <Route path="/templates" element={<ProtectedRoute adminOnly><TemplatesPage /></ProtectedRoute>} />

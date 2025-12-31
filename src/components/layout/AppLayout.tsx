@@ -1,6 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useUnreadTicketsCount } from '@/hooks/useTickets';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -8,7 +9,7 @@ import NotificationsPanel from '@/components/notifications/NotificationsPanel';
 import { 
   TrendingUp, LayoutDashboard, Users, MapPin, FileText, 
   MessageSquare, BarChart3, LogOut, Menu, Settings, History,
-  Calendar, Upload, Sliders
+  Calendar, Upload, Sliders, Mail
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +28,7 @@ const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Leads', href: '/leads', icon: FileText },
   { label: 'Meetings', href: '/meetings', icon: Calendar },
+  { label: 'Messages', href: '/messages', icon: Mail },
   { label: 'Users', href: '/users', icon: Users, adminOnly: true },
   { label: 'Locations', href: '/locations', icon: MapPin, adminOnly: true },
   { label: 'Templates', href: '/templates', icon: MessageSquare, adminOnly: true },
@@ -36,7 +38,7 @@ const navItems: NavItem[] = [
   { label: 'Activity Log', href: '/activity', icon: History, adminOnly: true },
 ];
 
-function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
+function NavLink({ item, onClick, unreadCount }: { item: NavItem; onClick?: () => void; unreadCount?: number }) {
   const location = useLocation();
   const isActive = location.pathname === item.href;
 
@@ -53,12 +55,18 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
     >
       <item.icon className="w-5 h-5" />
       {item.label}
+      {unreadCount && unreadCount > 0 && (
+        <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs p-0">
+          {unreadCount > 99 ? '99+' : unreadCount}
+        </Badge>
+      )}
     </Link>
   );
 }
 
 function Sidebar({ onClose }: { onClose?: () => void }) {
   const { profile, role, isAdmin, signOut } = useAuth();
+  const { data: unreadMessages } = useUnreadTicketsCount();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -89,7 +97,12 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {filteredNavItems.map((item) => (
-          <NavLink key={item.href} item={item} onClick={onClose} />
+          <NavLink 
+            key={item.href} 
+            item={item} 
+            onClick={onClose}
+            unreadCount={item.href === '/messages' ? unreadMessages : undefined}
+          />
         ))}
       </nav>
 

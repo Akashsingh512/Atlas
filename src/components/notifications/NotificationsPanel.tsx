@@ -14,6 +14,7 @@ const NOTIFICATION_ICONS = {
   overdue: AlertTriangle,
   announcement: Megaphone,
   missed_call: PhoneMissed,
+  ticket: Bell,
 };
 
 const NOTIFICATION_COLORS = {
@@ -22,6 +23,7 @@ const NOTIFICATION_COLORS = {
   overdue: 'text-destructive',
   announcement: 'text-accent',
   missed_call: 'text-status-junk',
+  ticket: 'text-primary',
 };
 
 export default function NotificationsPanel() {
@@ -44,6 +46,12 @@ export default function NotificationsPanel() {
       setOpen(false);
     } else if (notification.related_entity_type === 'meeting') {
       navigate('/meetings');
+      setOpen(false);
+    } else if (notification.related_entity_type === 'ticket' && notification.related_entity_id) {
+      navigate(`/messages?thread=${notification.related_entity_id}`);
+      setOpen(false);
+    } else if (notification.related_entity_type === 'ticket') {
+      navigate('/messages');
       setOpen(false);
     }
   };

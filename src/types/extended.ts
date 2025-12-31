@@ -48,7 +48,7 @@ export interface Notification {
   user_id: string;
   title: string;
   message: string;
-  type: 'meeting' | 'callback' | 'overdue' | 'announcement' | 'missed_call';
+  type: 'meeting' | 'callback' | 'overdue' | 'announcement' | 'missed_call' | 'ticket';
   related_entity_type: string | null;
   related_entity_id: string | null;
   is_read: boolean;
