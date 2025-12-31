@@ -793,6 +793,10 @@ export type Database = {
         Args: { _lead_id: string; _user_id: string }
         Returns: boolean
       }
+      user_can_access_meeting: {
+        Args: { _meeting_id: string; _user_id: string }
+        Returns: boolean
+      }
       user_has_location_access: {
         Args: { _location_id: string; _user_id: string }
         Returns: boolean
