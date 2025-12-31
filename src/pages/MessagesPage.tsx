@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import { useTickets, useSendTicket, useMarkTicketRead, TicketMessage } from '@/hooks/useTickets';
 import { useActiveUsers } from '@/hooks/useUsers';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import AppLayout from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +24,7 @@ export default function MessagesPage() {
   const { data: users } = useActiveUsers();
   const sendTicket = useSendTicket();
   const markRead = useMarkTicketRead();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -46,6 +49,42 @@ export default function MessagesPage() {
       }
     }
   }, [searchParams, tickets]);
+
+  // Update selected ticket when tickets data changes (real-time sync)
+  useEffect(() => {
+    if (selectedTicket && tickets) {
+      const updated = tickets.find(t => t.id === selectedTicket.id);
+      if (updated) {
+        setSelectedTicket(updated);
+      }
+    }
+  }, [tickets]);
+
+  // Real-time subscription for new messages
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('messages-page-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'ticket_messages',
+        },
+        () => {
+          // Refetch tickets when a new message is inserted
+          queryClient.invalidateQueries({ queryKey: ['tickets'] });
+          queryClient.invalidateQueries({ queryKey: ['tickets-unread'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, queryClient]);
 
   const handleSend = async () => {
     if (!formData.recipient_id || !formData.subject || !formData.message) return;

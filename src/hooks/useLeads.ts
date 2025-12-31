@@ -175,7 +175,8 @@ export function useCreateLead() {
       name: string; 
       phone: string; 
       email?: string; 
-      location_id?: string; 
+      location_id?: string;
+      sub_location_id?: string;
       lead_source?: string; 
       notes?: string; 
       assigned_to?: string;
