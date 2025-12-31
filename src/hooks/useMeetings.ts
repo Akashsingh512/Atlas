@@ -76,6 +76,74 @@ export function useTodayMeetings() {
   return useMeetings({ date: today, status: 'scheduled' });
 }
 
+export function useUpcomingMeetings() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['upcoming-meetings'],
+    queryFn: async () => {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { data: meetings, error } = await supabase
+        .from('meetings')
+        .select('*')
+        .gt('meeting_date', today)
+        .eq('status', 'scheduled')
+        .order('meeting_date', { ascending: true })
+        .order('meeting_time', { ascending: true })
+        .limit(5);
+
+      if (error) throw error;
+
+      // Fetch leads
+      const leadIds = [...new Set(meetings.map(m => m.lead_id))];
+      let leads: { id: string; name: string; phone: string }[] = [];
+      if (leadIds.length > 0) {
+        const { data } = await supabase
+          .from('leads')
+          .select('id, name, phone')
+          .in('id', leadIds);
+        leads = data || [];
+      }
+
+      // Fetch participants
+      const meetingIds = meetings.map(m => m.id);
+      let participants: { meeting_id: string; user_id: string }[] = [];
+      let participantProfiles: { user_id: string; full_name: string }[] = [];
+
+      if (meetingIds.length > 0) {
+        const { data: participantsData } = await supabase
+          .from('meeting_participants')
+          .select('meeting_id, user_id')
+          .in('meeting_id', meetingIds);
+        participants = participantsData || [];
+
+        const userIds = [...new Set(participants.map(p => p.user_id))];
+        if (userIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, full_name')
+            .in('user_id', userIds);
+          participantProfiles = profiles || [];
+        }
+      }
+
+      return meetings.map(meeting => ({
+        ...meeting,
+        status: meeting.status as Meeting['status'],
+        lead: leads.find(l => l.id === meeting.lead_id),
+        participants: participants
+          .filter(p => p.meeting_id === meeting.id)
+          .map(p => ({
+            ...p,
+            profile: participantProfiles.find(profile => profile.user_id === p.user_id),
+          })),
+      }));
+    },
+    enabled: !!user,
+  });
+}
+
 export function useLeadMeetings(leadId: string) {
   const { user } = useAuth();
 

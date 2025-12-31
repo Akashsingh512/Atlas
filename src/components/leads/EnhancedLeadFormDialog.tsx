@@ -5,10 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useLocationsWithSubLocations, useSubLocations } from '@/hooks/useLocations';
+import { useLocationsWithSubLocations } from '@/hooks/useLocations';
 import { useUsers } from '@/hooks/useUsers';
 import { useCreateLead } from '@/hooks/useLeads';
-import { LEAD_STATUS_CONFIG, LeadStatus } from '@/types';
+import { useStatusConfig } from '@/hooks/useStatusConfig';
 import { Plus, Loader2 } from 'lucide-react';
 
 const PROPERTY_TYPES = [
@@ -48,13 +48,14 @@ export default function EnhancedLeadFormDialog({ onSuccess }: EnhancedLeadFormDi
     property_type: '',
     budget: '',
     lead_source: '',
-    status: 'open' as LeadStatus,
+    status: 'open',
     assigned_to: '',
     notes: '',
   });
 
   const { data: locations } = useLocationsWithSubLocations();
   const { data: users } = useUsers();
+  const { activeStatuses } = useStatusConfig();
   const createLead = useCreateLead();
 
   // Get sub-locations for selected city
@@ -85,7 +86,7 @@ export default function EnhancedLeadFormDialog({ onSuccess }: EnhancedLeadFormDi
       assigned_to: formData.assigned_to || undefined,
       property_type: formData.property_type,
       budget: formData.budget,
-      status: formData.status,
+      status: formData.status as any,
     });
 
     setOpen(false);
@@ -255,14 +256,14 @@ export default function EnhancedLeadFormDialog({ onSuccess }: EnhancedLeadFormDi
                 <Label htmlFor="status" className="text-sm">Status</Label>
                 <Select 
                   value={formData.status} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, status: v as LeadStatus }))}
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, status: v }))}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(LEAD_STATUS_CONFIG).map(([key, config]) => (
-                      <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                    {activeStatuses.map((status) => (
+                      <SelectItem key={status.id} value={status.name}>{status.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
